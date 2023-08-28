@@ -1,6 +1,8 @@
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace GameEvent
 {
@@ -43,8 +45,11 @@ namespace GameEvent
                         {
                             if (iface.InterfaceType.FullName == typeof(GameEvent.IGameTask).FullName)
                             {
-                                paramIsGameTask = true;
-                                break;
+                                if (method.ReturnType.FullName.StartsWith(typeof(System.Threading.Tasks.Task).FullName))
+                                {
+                                    paramIsGameTask = true;
+                                    break;
+                                }
                             }
                         }
                         if (paramIsGameTask)
@@ -85,14 +90,18 @@ namespace GameEvent
 
             var __Invoke__Ret = assemblyDef.MainModule.ImportReference(typeof(bool));
 
-            var __Invoke__Param_Evt = new ParameterDefinition(assemblyDef.MainModule.ImportReference(typeof(IGameTask)));
-            __Invoke__Param_Evt.Name = "evt";
+            var __Invoke__Param_noAllocList = new ParameterDefinition(assemblyDef.MainModule.ImportReference(typeof(List<Task>)));
+            __Invoke__Param_noAllocList.Name = "noAllocList";
+
+            var __Invoke__Param_Task = new ParameterDefinition(assemblyDef.MainModule.ImportReference(typeof(IGameTask)));
+            __Invoke__Param_Task.Name = "task";
 
             var __Invoke__Param_isActive = new ParameterDefinition(assemblyDef.MainModule.ImportReference(typeof(bool)));
             __Invoke__Param_isActive.Name = "isActiveAndEnabled";
 
             var __Invoke__ = new MethodDefinition(__Invoke__Name, __Invoke__Attris, __Invoke__Ret);
-            __Invoke__.Parameters.Add(__Invoke__Param_Evt);
+            __Invoke__.Parameters.Add(__Invoke__Param_noAllocList);
+            __Invoke__.Parameters.Add(__Invoke__Param_Task);
             __Invoke__.Parameters.Add(__Invoke__Param_isActive);
 
             var __Invoke__IL = __Invoke__.Body.GetILProcessor();
@@ -101,7 +110,7 @@ namespace GameEvent
             var final_False = __Invoke__IL.Create(OpCodes.Ldc_I4_0);
             var final_Ret = __Invoke__IL.Create(OpCodes.Ret);
 
-            var next_IL = __Invoke__IL.Create(OpCodes.Ldarg_1);
+            var next_IL = __Invoke__IL.Create(OpCodes.Ldarg_2);
             if (isMono)
             {
                 __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
@@ -120,7 +129,7 @@ namespace GameEvent
                 __Invoke__IL.Append(next_IL);
                 {
                     // 生成新的 写一个块的第一句
-                    next_IL = __Invoke__IL.Create(OpCodes.Ldarg_1);
+                    next_IL = __Invoke__IL.Create(OpCodes.Ldarg_2);
                 }
                 __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Isinst, iLMethod.paramDef.ParameterType));
                 // 失败后跳转
@@ -141,10 +150,13 @@ namespace GameEvent
                 // 调用 事件
                 foreach (var methodDef in iLMethod.methodDef_List)
                 {
-                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
                     __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_1));
+                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
+                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_2));
                     __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Isinst, iLMethod.paramDef.ParameterType));
                     __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Call, methodDef));
+                    var addMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
+                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Callvirt, assemblyDef.MainModule.ImportReference(addMethod)));
                 }
 
                 if (iLMethod.methodDef_NeedEnable_List.Count != 0)
@@ -157,15 +169,18 @@ namespace GameEvent
                     __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Starg_S, __Invoke__Param_isActive));
 
                     // 当这个Mono Disable的时候，跳转至此Block的Return;
-                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_2));
+                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_3));
                     __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Brfalse_S, block_False));
 
                     foreach (var methodDef in iLMethod.methodDef_NeedEnable_List)
                     {
-                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
                         __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_1));
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_2));
                         __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Isinst, iLMethod.paramDef.ParameterType));
                         __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Call, methodDef));
+                        var addMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Callvirt, assemblyDef.MainModule.ImportReference(addMethod)));
                     }
                 }
 

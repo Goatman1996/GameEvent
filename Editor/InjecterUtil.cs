@@ -57,7 +57,10 @@ namespace GameEvent
                         {
                             if (iface.InterfaceType.FullName == typeof(GameEvent.IGameTask).FullName)
                             {
-                                return true;
+                                if (method.ReturnType.FullName.StartsWith(typeof(System.Threading.Tasks.Task).FullName))
+                                {
+                                    return true;
+                                }
                             }
                         }
                     }

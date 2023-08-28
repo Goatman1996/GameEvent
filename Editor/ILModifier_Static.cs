@@ -69,6 +69,23 @@ namespace GameEvent
             return collection;
         }
 
+        // internal static Dictionary<string, ILMethod_Static_Task> CollectingEvt(AssemblyDefinition assemblyDef)
+        // {
+        //     Dictionary<string, ILMethod_Static_Task> collection = new Dictionary<string, ILMethod_Static>();
+
+        //     foreach (var type in assemblyDef.MainModule.Types)
+        //     {
+        //         CollectingEvtInternal(type, collection);
+        //     }
+        //     foreach (var iLmethod in collection.Values)
+        //     {
+        //         iLmethod.GenerateILCode(assemblyDef);
+        //     }
+
+        //     return collection;
+        // }
+
+
         private static void CollectingEvtInternal(TypeDefinition type, Dictionary<string, ILMethod_Static> collection)
         {
             foreach (var nestedType in type.NestedTypes)
