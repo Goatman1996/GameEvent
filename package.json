@@ -1,0 +1,15 @@
+{
+  "name": "com.gm.gameevent",
+  "version": "0.0.1",
+  "displayName": "Game Event",
+  "description": "Unity Game Event System",
+  "unity": "2020.3",
+  "author": {
+    "name": "Goatman",
+    "email": "goatman914@gmail.com",
+    "url": "https://github.com/Goatman1996/"
+  },
+  "dependencies": {
+    "nuget.mono-cecil": "0.1.6-preview"
+  }
+}

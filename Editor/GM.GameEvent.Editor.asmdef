@@ -1,0 +1,21 @@
+{
+    "name": "GM.GameEvent.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e98c18919c20dfa4b8224b4018df7412"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Mono.Cecil.dll",
+        "Mono.Cecil.Pdb.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
