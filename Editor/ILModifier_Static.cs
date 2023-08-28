@@ -77,7 +77,7 @@ namespace GameEvent
             }
             if (type.IsClass == false) return;
 
-            if (InjecterUtil.NeedInjectClass(type, true) == false)
+            if (InjecterUtil.NeedInjectEvent(type, true) == false)
             {
                 return;
             }

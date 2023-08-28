@@ -71,14 +71,23 @@ namespace GameEvent
             }
             if (type.IsClass == false) return;
             if (type.IsValueType == true) return;
-            if (InjecterUtil.NeedInjectClass(type, false) == false)
-            {
-                return;
-            }
-            else
+
+            var hasInject = false;
+            if (InjecterUtil.NeedInjectEvent(type, false))
             {
                 ILModifier.ModifyType(type, assemblyDefinition);
                 reportSb.AppendLine($"[GameEvent] 注入{type.FullName}");
+                hasInject = true;
+            }
+            if (InjecterUtil.NeedInjectTask(type, false))
+            {
+                ILModifier_Task.ModifyType(type, assemblyDefinition);
+                reportSb.AppendLine($"[GameEvent] 注入{type.FullName}");
+                hasInject = true;
+            }
+            if (hasInject)
+            {
+                ILModifier.ModifyConstructor(type, assemblyDefinition);
             }
         }
 

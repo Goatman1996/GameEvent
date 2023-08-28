@@ -10,19 +10,56 @@ namespace GameEvent
 {
     internal static class InjecterUtil
     {
-        internal static bool NeedInjectClass(TypeDefinition targetType, bool isStatic)
+        internal static bool NeedInjectEvent(TypeDefinition targetType, bool isStatic)
         {
             foreach (var method in targetType.Methods)
             {
                 if (isStatic == false && method.IsStatic) continue;
                 if (isStatic && method.IsStatic == false) continue;
                 if (method.IsConstructor) continue;
+                if (method.Parameters.Count != 1) continue;
 
                 foreach (var attri in method.CustomAttributes)
                 {
                     if (attri.AttributeType.FullName == typeof(GameEvent.GameEventAttribute).FullName)
                     {
-                        return true;
+                        var paramDef = method.Parameters[0];
+                        var paramTypeDef = paramDef.ParameterType.Resolve();
+                        foreach (var iface in paramTypeDef.Interfaces)
+                        {
+                            if (iface.InterfaceType.FullName == typeof(GameEvent.IGameEvent).FullName)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        internal static bool NeedInjectTask(TypeDefinition targetType, bool isStatic)
+        {
+            foreach (var method in targetType.Methods)
+            {
+                if (isStatic == false && method.IsStatic) continue;
+                if (isStatic && method.IsStatic == false) continue;
+                if (method.IsConstructor) continue;
+                if (method.Parameters.Count != 1) continue;
+
+                foreach (var attri in method.CustomAttributes)
+                {
+                    if (attri.AttributeType.FullName == typeof(GameEvent.GameEventAttribute).FullName)
+                    {
+                        var paramDef = method.Parameters[0];
+                        var paramTypeDef = paramDef.ParameterType.Resolve();
+                        foreach (var iface in paramTypeDef.Interfaces)
+                        {
+                            if (iface.InterfaceType.FullName == typeof(GameEvent.IGameTask).FullName)
+                            {
+                                return true;
+                            }
+                        }
                     }
                 }
             }

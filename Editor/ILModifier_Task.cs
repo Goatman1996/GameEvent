@@ -4,19 +4,19 @@ using System.Collections.Generic;
 
 namespace GameEvent
 {
-    internal class ILModifier
+    internal class ILModifier_Task
     {
         internal static void ModifyType(TypeDefinition type, AssemblyDefinition assemblyDef)
         {
-            // 添加 接口__Instance_Invoker__
+            // 添加 __Instance_Invoker__Task__
             Import_Invoker(type, assemblyDef);
-            //  实现 接口__Instance_Invoker__
+            //  实现 __Instance_Invoker__Task__
             Implement_Invoker_Method(type, assemblyDef);
         }
 
         private static void Import_Invoker(TypeDefinition type, AssemblyDefinition assemblyDef)
         {
-            var invokerTypeRef = assemblyDef.MainModule.ImportReference(typeof(GameEvent.__Instance_Invoker__));
+            var invokerTypeRef = assemblyDef.MainModule.ImportReference(typeof(GameEvent.__Instance_Invoker__Task__));
             var invoker = new InterfaceImplementation(invokerTypeRef);
             type.Interfaces.Add(invoker);
         }
@@ -38,16 +38,16 @@ namespace GameEvent
                     {
                         var paramDef = method.Parameters[0];
                         var paramTypeDef = paramDef.ParameterType.Resolve();
-                        bool paramIsGameEvent = false;
+                        bool paramIsGameTask = false;
                         foreach (var iface in paramTypeDef.Interfaces)
                         {
-                            if (iface.InterfaceType.FullName == typeof(GameEvent.IGameEvent).FullName)
+                            if (iface.InterfaceType.FullName == typeof(GameEvent.IGameTask).FullName)
                             {
-                                paramIsGameEvent = true;
+                                paramIsGameTask = true;
                                 break;
                             }
                         }
-                        if (paramIsGameEvent)
+                        if (paramIsGameTask)
                         {
                             // =====新的·
                             var evtName = paramDef.ParameterType.FullName;
@@ -85,7 +85,7 @@ namespace GameEvent
 
             var __Invoke__Ret = assemblyDef.MainModule.ImportReference(typeof(bool));
 
-            var __Invoke__Param_Evt = new ParameterDefinition(assemblyDef.MainModule.ImportReference(typeof(IGameEvent)));
+            var __Invoke__Param_Evt = new ParameterDefinition(assemblyDef.MainModule.ImportReference(typeof(IGameTask)));
             __Invoke__Param_Evt.Name = "evt";
 
             var __Invoke__Param_isActive = new ParameterDefinition(assemblyDef.MainModule.ImportReference(typeof(bool)));
@@ -179,29 +179,6 @@ namespace GameEvent
             // =====新的·
 
             type.Methods.Add(__Invoke__);
-        }
-
-        internal static void ModifyConstructor(TypeDefinition type, AssemblyDefinition assemblyDef)
-        {
-            foreach (var m in type.Methods)
-            {
-                if (m.IsConstructor)
-                {
-                    if (m.IsStatic) continue;
-
-                    if (m.Body == null)
-                    {
-                        continue;
-                    }
-
-                    var ilProcesser = m.Body.GetILProcessor();
-                    var firstLine = m.Body.Instructions[0];
-                    ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
-                    var registerMethod = InjecterUtil.GetRegisterMethod();
-                    var methodReference = assemblyDef.MainModule.ImportReference(registerMethod);
-                    ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Call, methodReference));
-                }
-            }
         }
     }
 }
