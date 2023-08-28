@@ -13,8 +13,6 @@ namespace GameEvent
 {
     public class GlobalEventInjecter
     {
-
-
         private static StringBuilder reportSb;
         public static void InjectEvent(string dllPath)
         {

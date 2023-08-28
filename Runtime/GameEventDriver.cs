@@ -25,7 +25,6 @@ namespace GameEvent
             }
         }
 
-
         private static List<__Instance_Invoker__> unCheckAssetList = new List<__Instance_Invoker__>(32);
         private static List<__Instance_Invoker__> managedList = new List<__Instance_Invoker__>(32);
         private static bool needCheckAsset = false;
