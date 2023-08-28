@@ -98,5 +98,13 @@ namespace GameEvent
             InjectEvent("./Library/ScriptAssemblies/Assembly-CSharp.dll");
         }
 
+        [UnityEditor.Callbacks.PostProcessScene]
+        public static void AutoInjectAssemblys()
+        {
+            if (File.Exists("./Library/PlayerScriptAssemblies/Assembly-CSharp.dll"))
+            {
+                GameEvent.GlobalEventInjecter.InjectEvent("./Library/PlayerScriptAssemblies/Assembly-CSharp.dll");
+            }
+        }
     }
 }

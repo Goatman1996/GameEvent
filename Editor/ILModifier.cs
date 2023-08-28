@@ -95,6 +95,10 @@ namespace GameEvent
             __Invoke__.Parameters.Add(__Invoke__Param_Evt);
             __Invoke__.Parameters.Add(__Invoke__Param_isActive);
 
+            var PreserveCtor = typeof(UnityEngine.Scripting.PreserveAttribute).GetConstructors()[0];
+            var Preserve = new CustomAttribute(assemblyDef.MainModule.ImportReference(PreserveCtor));
+            __Invoke__.CustomAttributes.Add(Preserve);
+
             var __Invoke__IL = __Invoke__.Body.GetILProcessor();
 
             // =====新的·

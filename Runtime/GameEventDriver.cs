@@ -17,7 +17,7 @@ namespace GameEvent
         public static void Initialize(string assemblyName)
         {
             var assembly = Assembly.Load(assemblyName);
-            var type = assembly.GetType($"{InjectedNameSpace}.{InjectedClazz}");
+            var type = assembly.GetType($"{InjectedNameSpace}.{InjectedClazz}", true);
             if (type != null)
             {
                 staticInvoker = Activator.CreateInstance(type) as __Static__Invoker__;

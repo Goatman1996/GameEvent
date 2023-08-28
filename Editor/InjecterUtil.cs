@@ -129,6 +129,10 @@ namespace GameEvent
         {
             var injectedTypeDef = new TypeDefinition(GameEventDriver.InjectedNameSpace, GameEventDriver.InjectedClazz, Mono.Cecil.TypeAttributes.Class | Mono.Cecil.TypeAttributes.Public, assemblyDef.MainModule.TypeSystem.Object);
 
+            var PreserveCtor = typeof(UnityEngine.Scripting.PreserveAttribute).GetConstructors()[0];
+            var Preserve = new CustomAttribute(assemblyDef.MainModule.ImportReference(PreserveCtor));
+            injectedTypeDef.CustomAttributes.Add(Preserve);
+
             assemblyDef.MainModule.Types.Add(injectedTypeDef);
 
             return injectedTypeDef;
@@ -152,6 +156,12 @@ namespace GameEvent
             var __Constructor__Ret = assemblyDef.MainModule.ImportReference(typeof(void));
 
             var __Constructor__ = new MethodDefinition(__Constructor__Name, __Constructor__Attris, __Constructor__Ret);
+
+            {
+                var PreserveCtor = typeof(UnityEngine.Scripting.PreserveAttribute).GetConstructors()[0];
+                var Preserve = new CustomAttribute(assemblyDef.MainModule.ImportReference(PreserveCtor));
+                __Constructor__.CustomAttributes.Add(Preserve);
+            }
 
             var __Constructor__IL = __Constructor__.Body.GetILProcessor();
             __Constructor__IL.Append(__Constructor__IL.Create(OpCodes.Ldarg_0));
@@ -179,6 +189,12 @@ namespace GameEvent
             var __Invoke__ = new MethodDefinition(__Invoke__Name, __Invoke__Attris, __Invoke__Ret);
             __Invoke__.Parameters.Add(__Invoke__Param_Evt);
 
+            {
+                var PreserveCtor = typeof(UnityEngine.Scripting.PreserveAttribute).GetConstructors()[0];
+                var Preserve = new CustomAttribute(assemblyDef.MainModule.ImportReference(PreserveCtor));
+                __Invoke__.CustomAttributes.Add(Preserve);
+            }
+
             injectedTypeDef.Methods.Add(__Invoke__);
 
 
@@ -203,9 +219,12 @@ namespace GameEvent
             __Invoke__Task.Parameters.Add(__Invoke__Param_noAllocList);
             __Invoke__Task.Parameters.Add(__Invoke__Param_Task);
 
+            {
+                var PreserveCtor = typeof(UnityEngine.Scripting.PreserveAttribute).GetConstructors()[0];
+                var Preserve = new CustomAttribute(assemblyDef.MainModule.ImportReference(PreserveCtor));
+                __Invoke__Task.CustomAttributes.Add(Preserve);
+            }
 
-
-            injectedTypeDef.Methods.Add(__Invoke__);
             injectedTypeDef.Methods.Add(__Invoke__Task);
 
             taskInvokerDef = __Invoke__Task;
