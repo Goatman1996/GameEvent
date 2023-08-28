@@ -1,2 +1,4 @@
 # GameEvent
-A Unity base on [C#] Attribute  Event System
+Unity Game Event System
+
+Base on [C#] Attribute
