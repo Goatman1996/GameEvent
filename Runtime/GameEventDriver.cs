@@ -123,7 +123,7 @@ namespace GameEvent
         {
             noAllocTaskList.Clear();
 
-            // if (hasStaticInvoker) staticInvoker.__Invoke__(arg);
+            if (hasStaticInvoker) staticInvoker.__Invoke__(noAllocTaskList, arg);
 
             if (needCheckAsset_Task) CheckAsset_Task();
 

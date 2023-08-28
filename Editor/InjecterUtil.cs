@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -133,7 +134,7 @@ namespace GameEvent
             return injectedTypeDef;
         }
 
-        internal static MethodDefinition MarkStaticInterface(AssemblyDefinition assemblyDef, TypeDefinition injectedTypeDef)
+        internal static MethodDefinition MarkStaticInterface(AssemblyDefinition assemblyDef, TypeDefinition injectedTypeDef, out MethodDefinition taskInvokerDef)
         {
             // 添加__Static__Invoker__接口
             var invokerTypeRef = assemblyDef.MainModule.ImportReference(typeof(GameEvent.__Static__Invoker__));
@@ -180,6 +181,34 @@ namespace GameEvent
 
             injectedTypeDef.Methods.Add(__Invoke__);
 
+
+            // 添加__Static__Invoker__接口是实现
+            var __Invoke_Task_Name = "__Invoke__";
+
+            var __Invoke_Task_Attris = Mono.Cecil.MethodAttributes.Public;
+            __Invoke_Task_Attris |= Mono.Cecil.MethodAttributes.HideBySig;
+            __Invoke_Task_Attris |= Mono.Cecil.MethodAttributes.NewSlot;
+            __Invoke_Task_Attris |= Mono.Cecil.MethodAttributes.Virtual;
+            __Invoke_Task_Attris |= Mono.Cecil.MethodAttributes.Final;
+
+            var __Invoke_Task_Ret = assemblyDef.MainModule.ImportReference(typeof(void));
+
+            var __Invoke__Param_noAllocList = new ParameterDefinition(assemblyDef.MainModule.ImportReference(typeof(List<Task>)));
+            __Invoke__Param_noAllocList.Name = "noAllocList";
+
+            var __Invoke__Param_Task = new ParameterDefinition(assemblyDef.MainModule.ImportReference(typeof(IGameTask)));
+            __Invoke__Param_Task.Name = "task";
+
+            var __Invoke__Task = new MethodDefinition(__Invoke_Task_Name, __Invoke_Task_Attris, __Invoke_Task_Ret);
+            __Invoke__Task.Parameters.Add(__Invoke__Param_noAllocList);
+            __Invoke__Task.Parameters.Add(__Invoke__Param_Task);
+
+
+
+            injectedTypeDef.Methods.Add(__Invoke__);
+            injectedTypeDef.Methods.Add(__Invoke__Task);
+
+            taskInvokerDef = __Invoke__Task;
             return __Invoke__;
         }
     }

@@ -42,9 +42,12 @@ namespace GameEvent
                 }
 
                 var mark_Type_As_Static_Invoker = InjecterUtil.MarkAsInjected(assemblyDefinition);
-                var staticInvoker = InjecterUtil.MarkStaticInterface(assemblyDefinition, mark_Type_As_Static_Invoker);
+                var staticInvoker = InjecterUtil.MarkStaticInterface(assemblyDefinition, mark_Type_As_Static_Invoker, out MethodDefinition taskInvokerDef);
                 var staticEvtCollection = ILModifier_Static.CollectingEvt(assemblyDefinition);
                 ILModifier_Static.InjectStatic(staticEvtCollection, staticInvoker, assemblyDefinition);
+
+                var staticTaskCollection = ILModifier_Static.CollectingTask(assemblyDefinition);
+                ILModifier_Static.InjectStatic(staticTaskCollection, taskInvokerDef, assemblyDefinition);
 
                 InjecterIo.WriteAssembly(dllPath, assemblyDefinition);
 

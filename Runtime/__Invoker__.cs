@@ -17,6 +17,6 @@ namespace GameEvent
     {
         public void __Invoke__(IGameEvent evt);
 
-        public void __Invoke__(List<Task> noAllocList, IGameEvent evt);
+        public void __Invoke__(List<Task> noAllocList, IGameTask task);
     }
 }
