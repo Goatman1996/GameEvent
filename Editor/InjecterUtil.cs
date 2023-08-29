@@ -166,8 +166,8 @@ namespace GameEvent
             var __Constructor__IL = __Constructor__.Body.GetILProcessor();
             __Constructor__IL.Append(__Constructor__IL.Create(OpCodes.Ldarg_0));
             var obj_ctor = typeof(object).GetConstructor(new Type[] { });
-            var obj_ctor_Red = assemblyDef.MainModule.ImportReference(obj_ctor);
-            __Constructor__IL.Append(__Constructor__IL.Create(OpCodes.Call, obj_ctor_Red));
+            var obj_ctor_Ref = assemblyDef.MainModule.ImportReference(obj_ctor);
+            __Constructor__IL.Append(__Constructor__IL.Create(OpCodes.Call, obj_ctor_Ref));
             __Constructor__IL.Append(__Constructor__IL.Create(OpCodes.Ret));
 
             injectedTypeDef.Methods.Add(__Constructor__);

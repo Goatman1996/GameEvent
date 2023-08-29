@@ -154,13 +154,26 @@ namespace GameEvent
                 // 调用 事件
                 foreach (var methodDef in iLMethod.methodDef_List)
                 {
-                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_1));
-                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
-                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_2));
-                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Isinst, iLMethod.paramDef.ParameterType));
-                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Call, methodDef));
-                    var addMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
-                    __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Callvirt, assemblyDef.MainModule.ImportReference(addMethod)));
+                    if (methodDef.Parameters[0].ParameterType.IsValueType)
+                    {
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_1));
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_2));
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Unbox_Any, iLMethod.paramDef.ParameterType));
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Call, methodDef));
+                        var addMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Callvirt, assemblyDef.MainModule.ImportReference(addMethod)));
+                    }
+                    else
+                    {
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_1));
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_2));
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Isinst, iLMethod.paramDef.ParameterType));
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Call, methodDef));
+                        var addMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
+                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Callvirt, assemblyDef.MainModule.ImportReference(addMethod)));
+                    }
                 }
 
                 if (iLMethod.methodDef_NeedEnable_List.Count != 0)
@@ -178,13 +191,26 @@ namespace GameEvent
 
                     foreach (var methodDef in iLMethod.methodDef_NeedEnable_List)
                     {
-                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_1));
-                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
-                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_2));
-                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Isinst, iLMethod.paramDef.ParameterType));
-                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Call, methodDef));
-                        var addMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
-                        __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Callvirt, assemblyDef.MainModule.ImportReference(addMethod)));
+                        if (methodDef.Parameters[0].ParameterType.IsValueType)
+                        {
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_1));
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_2));
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Unbox_Any, iLMethod.paramDef.ParameterType));
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Call, methodDef));
+                            var addMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Callvirt, assemblyDef.MainModule.ImportReference(addMethod)));
+                        }
+                        else
+                        {
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_1));
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_0));
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Ldarg_2));
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Isinst, iLMethod.paramDef.ParameterType));
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Call, methodDef));
+                            var addMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
+                            __Invoke__IL.Append(__Invoke__IL.Create(OpCodes.Callvirt, assemblyDef.MainModule.ImportReference(addMethod)));
+                        }
                     }
                 }
 
