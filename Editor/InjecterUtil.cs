@@ -101,6 +101,23 @@ namespace GameEvent
             return resole;
         }
 
+        internal static List<TypeDefinition> GetSubType_IGameEvent(AssemblyDefinition assemblyDefinition)
+        {
+            var ret = new List<TypeDefinition>();
+            foreach (var type in assemblyDefinition.MainModule.Types)
+            {
+                foreach (var iface in type.Interfaces)
+                {
+                    if (iface.InterfaceType.FullName == typeof(IGameEvent).FullName)
+                    {
+                        ret.Add(type);
+                        break;
+                    }
+                }
+            }
+            return ret;
+        }
+
         internal static bool HasInjected(AssemblyDefinition assemblyDefinition)
         {
             var injected = assemblyDefinition.MainModule.Types.Any((t)

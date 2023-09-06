@@ -13,9 +13,22 @@ namespace GameEvent
 {
     public class GlobalEventInjecter
     {
+        private static void Test(AssemblyDefinition assemblyDef)
+        {
+            var type = assemblyDef.MainModule.GetType("Oper_Struct");
+            UnityEngine.Debug.Log(type);
+
+            var methodName = "Invoke";
+            var methodAttri = MethodAttributes.Public;
+        }
+
         private static StringBuilder reportSb;
         public static void InjectEvent(string dllPath)
         {
+            var injecter = new Injecter(dllPath);
+            injecter.Inject();
+            return;
+
             reportSb = new StringBuilder();
             reportSb.AppendLine($"[GameEvent] 开始注入");
 
