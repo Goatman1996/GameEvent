@@ -86,16 +86,17 @@ namespace GameEvent
 
             var ilProcesser = iInvoke.Body.GetILProcessor();
 
-            var FinalRet = ilProcesser.Create(OpCodes.Ret);
+            var monoBlockFirstLine = ilProcesser.Create(OpCodes.Ldarg_0);
+            var invokeBlockRet = ilProcesser.Create(OpCodes.Ret);
 
             if (this.isMono)
             {
                 // if (this) { } return;
                 ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_0));
-                var monoIsNull = typeof(UnityEngine.Object).GetMethod("op_Implicit");
-                var monoIsNull_Ref = assemblyDefinition.MainModule.ImportReference(monoIsNull);
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, monoIsNull_Ref));
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Brfalse_S, FinalRet));
+                var monoIsExist = typeof(UnityEngine.Object).GetMethod("op_Implicit");
+                var monoIsExist_Ref = assemblyDefinition.MainModule.ImportReference(monoIsExist);
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, monoIsExist_Ref));
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Brfalse_S, monoBlockFirstLine));
             }
 
             var instanceMethodList = this.eventUsageCollection.TryGetEventTypeUsage(eventType, false, false);
@@ -116,7 +117,7 @@ namespace GameEvent
                 var isEnableMethod = typeof(UnityEngine.Behaviour).GetProperty("isActiveAndEnabled").GetMethod;
                 var isEnableMethodRef = assemblyDefinition.MainModule.ImportReference(isEnableMethod);
                 ilProcesser.Append(ilProcesser.Create(OpCodes.Call, isEnableMethodRef));
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Brfalse_S, FinalRet));
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Brfalse_S, invokeBlockRet));
 
                 foreach (var method in monoEnableMethodList)
                 {
@@ -125,8 +126,18 @@ namespace GameEvent
                     ilProcesser.Append(ilProcesser.Create(OpCodes.Call, method));
                 }
             }
+            ilProcesser.Append(invokeBlockRet);
 
-            ilProcesser.Append(FinalRet);
+            if (this.isMono)
+            {
+                // if (!this) GameEvent.GameEventDriver.Unregister(this);
+                ilProcesser.Append(monoBlockFirstLine);
+                var unregisterMethod = typeof(GameEvent.GameEventDriver).GetMethod("Unregister", new[] { typeof(object) });
+                var unregisterMethod_Ret = assemblyDefinition.MainModule.ImportReference(unregisterMethod);
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, unregisterMethod_Ret));
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Ret));
+            }
+
         }
 
         private MethodDefinition Inject_Event_iInvoker(EventModifier eventModifier)
