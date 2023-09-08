@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -10,6 +12,7 @@ namespace GameEvent
         public AssemblyDefinition assemblyDefinition;
         public MethodUsageCache usageCache;
         public Injecter.Logger logger;
+        public bool isGameTask;
 
         // IGameEvent 的 实现类
         public TypeDefinition eventType;
@@ -345,8 +348,24 @@ namespace GameEvent
             var count = this.eventStaticInvoker.Body.Instructions.Count;
             var lastLine = this.eventStaticInvoker.Body.Instructions[count - 1];
 
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldarg_0));
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, method));
+            if (this.isGameTask)
+            {
+                var taskListField = typeof(GameEventDriver).GetField("taskList", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                var taskListField_Ref = assemblyDefinition.MainModule.ImportReference(taskListField);
+                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldsfld, taskListField_Ref));
+
+                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldarg_0));
+                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, method));
+
+                var addTaskMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
+                var addTaskMethod_Ref = assemblyDefinition.MainModule.ImportReference(addTaskMethod);
+                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Callvirt, addTaskMethod_Ref));
+            }
+            else
+            {
+                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldarg_0));
+                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, method));
+            }
         }
     }
 }

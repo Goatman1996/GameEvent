@@ -86,5 +86,28 @@ namespace GameEvent
             willRemoveList.Clear();
             hasWilRemove = false;
         }
+
+        private static bool isTasking = false;
+        public static bool IsTasking { get => isTasking; }
+        public static List<Task> taskList = new List<Task>();
+        public static async Task InvokeTask<T>(this T arg) where T : IGameTask
+        {
+            if (isTasking)
+            {
+                throw new Exception($"[GameEvent] Not Allow [InvokeTask] When Still Has Running Task.");
+            }
+            isTasking = true;
+            taskList.Clear();
+
+            if (needCheckAsset) CheckAssetAndRegister();
+
+            isEventing = true;
+            arg.ToString();
+
+            if (hasWilRemove) DoRemove();
+
+            await Task.WhenAll(taskList);
+            isTasking = false;
+        }
     }
 }

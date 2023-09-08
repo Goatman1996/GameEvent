@@ -49,8 +49,21 @@ namespace GameEvent
                 injecter.assemblyDefinition = this.assemblyDefinition;
                 injecter.usageCache = this.usageCache;
                 injecter.logger = this.logger;
+                injecter.isGameTask = false;
 
                 this.eventModifierList.Add(gameEventType, injecter);
+            }
+
+            foreach (var gameTaskType in this.usageCache.GetGameTaskList())
+            {
+                var injecter = new EventModifier();
+                injecter.eventType = gameTaskType;
+                injecter.assemblyDefinition = this.assemblyDefinition;
+                injecter.usageCache = this.usageCache;
+                injecter.logger = this.logger;
+                injecter.isGameTask = true;
+
+                this.eventModifierList.Add(gameTaskType, injecter);
             }
         }
 

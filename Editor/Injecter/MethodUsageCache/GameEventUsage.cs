@@ -60,41 +60,6 @@ namespace GameEvent
             collection[eventType].Add(method);
         }
 
-        public IEnumerable<TypeDefinition> GetAllStaticEvent()
-        {
-            return this.event_Static_Usage_Cache.Keys;
-        }
-
-        public IEnumerable<TypeDefinition> GetAllInstanceEvent()
-        {
-            var ret = new HashSet<TypeDefinition>();
-            foreach (var eventType in this.event_Instance_Usage_Cache.Keys)
-            {
-                ret.Add(eventType);
-            }
-            foreach (var eventType in this.event_Mono_Enable_Usage_Cache.Keys)
-            {
-                if (ret.Contains(eventType)) continue;
-                ret.Add(eventType);
-            }
-            return ret;
-        }
-
-        public IEnumerable<MethodDefinition> TryGetEventTypeUsage(TypeDefinition eventType, bool isStatic, bool CallOnlyIfMonoEnable)
-        {
-            var collection = this.GetEventCollection(isStatic, CallOnlyIfMonoEnable);
-            if (collection.ContainsKey(eventType))
-            {
-                return collection[eventType];
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-
-
 
 
         private UsageCollection task_Instance_Usage_Cache = new UsageCollection();
@@ -117,6 +82,78 @@ namespace GameEvent
                 collection.Add(taskType, new List<MethodDefinition>());
             }
             collection[taskType].Add(method);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        public IEnumerable<TypeDefinition> GetAllStaticEventAndTask()
+        {
+            var ret = new List<TypeDefinition>();
+            ret.AddRange(this.event_Static_Usage_Cache.Keys);
+            ret.AddRange(this.task_Static_Usage_Cache.Keys);
+            return ret;
+        }
+
+        public IEnumerable<TypeDefinition> GetAllInstanceEventAndTask()
+        {
+            var ret = new HashSet<TypeDefinition>();
+            foreach (var eventType in this.event_Instance_Usage_Cache.Keys)
+            {
+                ret.Add(eventType);
+            }
+            foreach (var eventType in this.event_Mono_Enable_Usage_Cache.Keys)
+            {
+                if (ret.Contains(eventType)) continue;
+                ret.Add(eventType);
+            }
+            foreach (var eventType in this.task_Instance_Usage_Cache.Keys)
+            {
+                ret.Add(eventType);
+            }
+            foreach (var eventType in this.task_Mono_Enable_Usage_Cache.Keys)
+            {
+                if (ret.Contains(eventType)) continue;
+                ret.Add(eventType);
+            }
+            return ret;
+        }
+
+        public IEnumerable<MethodDefinition> TryGetEventTypeUsage(TypeDefinition eventType, bool isStatic, bool CallOnlyIfMonoEnable)
+        {
+            var ret = new List<MethodDefinition>();
+
+            var eventCollection = this.GetEventCollection(isStatic, CallOnlyIfMonoEnable);
+            if (eventCollection.ContainsKey(eventType))
+            {
+                ret.AddRange(eventCollection[eventType]);
+            }
+            var taskCollection = this.GetTaskCollection(isStatic, CallOnlyIfMonoEnable);
+            if (taskCollection.ContainsKey(eventType))
+            {
+                ret.AddRange(taskCollection[eventType]);
+            }
+
+            if (ret.Count == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return ret;
+            }
         }
     }
 }

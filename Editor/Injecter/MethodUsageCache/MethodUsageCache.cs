@@ -165,6 +165,11 @@ namespace GameEvent
             return this.iGameEventList;
         }
 
+        public IEnumerable<TypeDefinition> GetGameTaskList()
+        {
+            return this.iGameTaskList;
+        }
+
         public IEnumerable<GameEventUsage> GetGameEventUsage()
         {
             return this.userType_EventUsage_Collection.Values;
