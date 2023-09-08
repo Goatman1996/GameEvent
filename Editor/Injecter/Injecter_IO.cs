@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using Mono.Cecil;
+using System.Linq;
 
 namespace GameEvent
 {
@@ -32,11 +35,37 @@ namespace GameEvent
             File.Copy(this.pdbPath, this.bakPdbPath);
         }
 
+        private DefaultAssemblyResolver CreateAssemblyResolver()
+        {
+            HashSet<string> searchDir = new HashSet<string>();
+            foreach (var path in (from asm in AppDomain.CurrentDomain.GetAssemblies()
+                                  select Path.GetDirectoryName(asm.ManifestModule.FullyQualifiedName)).Distinct())
+            {
+                try
+                {
+                    // UnityEngine.Debug.Log(path);
+                    if (searchDir.Contains(path) == false)
+                    {
+                        searchDir.Add(path);
+                    }
+                }
+                catch { }
+            }
+
+            DefaultAssemblyResolver resole = new DefaultAssemblyResolver();
+            foreach (var referenceDir in searchDir)
+            {
+                resole.AddSearchDirectory(referenceDir);
+            }
+
+            return resole;
+        }
+
         private void ReadDll()
         {
             this.dllStream = new FileStream(this.bakeDllPath, FileMode.Open);
 
-            var assemblyResolver = InjecterUtil.CreateAssemblyResolver();
+            var assemblyResolver = this.CreateAssemblyResolver();
 
             var assemblyReadParams = new ReaderParameters
             {
