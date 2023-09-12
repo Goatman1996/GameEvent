@@ -4,5 +4,6 @@ namespace GameEvent
     {
         public void Register(object target);
         public void Unregister(object target);
+        public void StaticRegister();
     }
 }

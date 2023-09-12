@@ -30,12 +30,16 @@ namespace GameEvent
                     this.DeleteBackUp();
                     return;
                 }
-
+                // 构建 事件 相关的使用 并 缓存
                 this.BuildUsageCache();
-
+                // 修改 事件
                 this.ModifyGameEvent();
-
+                // 创建 RegisterBridge
                 this.InjectBridge();
+                // 修改 事件 使用者
+                this.ModifyUsage();
+
+
 
                 this.WriteDll();
 

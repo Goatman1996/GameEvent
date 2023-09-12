@@ -9,6 +9,7 @@ namespace GameEvent
         private TypeDefinition bridgeType;
         private MethodDefinition registerMethod;
         private MethodDefinition unregisterMethod;
+        private MethodDefinition staticRegisterMethod;
 
         private void InjectBridge()
         {
@@ -31,6 +32,7 @@ namespace GameEvent
             this.Generate_CTOR();
             this.Generate_Register();
             this.Generate_Unregister();
+            this.Generate_StaticRegister();
         }
 
         private void Generate_iRegisterBridge()
@@ -147,6 +149,41 @@ namespace GameEvent
             this.bridgeType.Methods.Add(unregisterMethod);
 
             this.unregisterMethod = unregisterMethod;
+        }
+
+        private void Generate_StaticRegister()
+        {
+            // 添加 Static Register
+            var staticRegisterName = "StaticRegister";
+
+            var staticRegisterAttri = Mono.Cecil.MethodAttributes.Public;
+            staticRegisterAttri |= Mono.Cecil.MethodAttributes.HideBySig;
+            staticRegisterAttri |= Mono.Cecil.MethodAttributes.NewSlot;
+            staticRegisterAttri |= Mono.Cecil.MethodAttributes.Virtual;
+            staticRegisterAttri |= Mono.Cecil.MethodAttributes.Final;
+
+            var staticRegisterRet = assemblyDefinition.MainModule.ImportReference(typeof(void));
+
+            var staticRegisterMethod = new MethodDefinition(staticRegisterName, staticRegisterAttri, staticRegisterRet);
+
+            var ilProcesser = staticRegisterMethod.Body.GetILProcessor();
+            ilProcesser.Append(ilProcesser.Create(OpCodes.Ret));
+
+            this.bridgeType.Methods.Add(staticRegisterMethod);
+            this.staticRegisterMethod = staticRegisterMethod;
+        }
+
+        public void AppendStaticMethodToRegisterBridge(MethodReference staticMethod, EventModifier targetEventModifier)
+        {
+            var ilProcesser = this.staticRegisterMethod.Body.GetILProcessor();
+            var count = this.staticRegisterMethod.Body.Instructions.Count;
+            var lastLine = this.staticRegisterMethod.Body.Instructions[count - 1];
+
+            // EventModifier.StaticRegister(staticMethod);
+            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldnull));
+            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldftn, staticMethod));
+            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Newobj, targetEventModifier.action_CTOR));
+            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, targetEventModifier.eventStaticRegister));
         }
     }
 }

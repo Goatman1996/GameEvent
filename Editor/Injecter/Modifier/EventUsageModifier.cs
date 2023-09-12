@@ -12,6 +12,7 @@ namespace GameEvent
         public AssemblyDefinition assemblyDefinition;
         public GameEventUsage eventUsageCollection;
         public Func<TypeDefinition, EventModifier> eventModifyProvider;
+        public Action<MethodReference, EventModifier> AppendStaticMethodToRegisterBridge;
 
         public TypeDefinition declaringType { get => this.eventUsageCollection.usageType; }
         private bool isMono { get => this.eventUsageCollection.isMono; }
@@ -38,13 +39,12 @@ namespace GameEvent
                 }
                 foreach (var method in methodList)
                 {
-                    var methodWrapper = Generate_StaticMethod_Wrapper(method);
-                    eventModify.AppendStaticMethod(methodWrapper);
+                    Generate_StaticMethod_Wrapper(method, eventModify);
                 }
             }
         }
 
-        private MethodReference Generate_StaticMethod_Wrapper(MethodDefinition method)
+        private void Generate_StaticMethod_Wrapper(MethodDefinition method, EventModifier targetEvent)
         {
             var methodName = $"{method.Name}__Wrapper";
             var methodAttri = MethodAttributes.Public;
@@ -59,13 +59,31 @@ namespace GameEvent
             methodWrapper.Parameters.Add(param);
 
             var ilProcesser = methodWrapper.Body.GetILProcessor();
-            ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_0));
-            ilProcesser.Append(ilProcesser.Create(OpCodes.Call, method));
+
+            if (targetEvent.isGameTask)
+            {
+                var taskListField = typeof(GameEventDriver).GetField("taskList", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                var taskListField_Ref = assemblyDefinition.MainModule.ImportReference(taskListField);
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldsfld, taskListField_Ref));
+
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_0));
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, method));
+
+                var addTaskMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
+                var addTaskMethod_Ref = assemblyDefinition.MainModule.ImportReference(addTaskMethod);
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Callvirt, addTaskMethod_Ref));
+            }
+            else
+            {
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_0));
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, method));
+            }
+
             ilProcesser.Append(ilProcesser.Create(OpCodes.Ret));
 
             declaringType.Methods.Add(methodWrapper);
 
-            return methodWrapper;
+            this.AppendStaticMethodToRegisterBridge.Invoke(methodWrapper, targetEvent);
         }
 
         private bool InjectInstanceInvokerToUsageType()

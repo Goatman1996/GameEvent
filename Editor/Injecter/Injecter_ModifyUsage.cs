@@ -6,18 +6,10 @@ namespace GameEvent
 {
     public partial class Injecter
     {
-        private Dictionary<TypeDefinition, EventModifier> eventModifierList = new Dictionary<TypeDefinition, EventModifier>();
-
         private List<EventUsageModifier> usageModifierList = new List<EventUsageModifier>();
 
-        private void ModifyGameEvent()
+        private void ModifyUsage()
         {
-            this.CollectEventModifier();
-            foreach (var modifier in this.eventModifierList.Values)
-            {
-                modifier.Modify();
-            }
-
             this.CollectEventUsageModifier();
             foreach (var modifier in this.usageModifierList)
             {
@@ -26,44 +18,6 @@ namespace GameEvent
                 {
                     this.InjectRegisterToCTOR(modifier.declaringType);
                 }
-            }
-        }
-
-        private EventModifier GetEventModify(TypeDefinition eventType)
-        {
-            if (this.eventModifierList.ContainsKey(eventType))
-            {
-                return this.eventModifierList[eventType];
-            }
-            return null;
-        }
-
-        private void CollectEventModifier()
-        {
-            this.eventModifierList.Clear();
-
-            foreach (var gameEventType in this.usageCache.GetGameEventList())
-            {
-                var injecter = new EventModifier();
-                injecter.eventType = gameEventType;
-                injecter.assemblyDefinition = this.assemblyDefinition;
-                injecter.usageCache = this.usageCache;
-                injecter.logger = this.logger;
-                injecter.isGameTask = false;
-
-                this.eventModifierList.Add(gameEventType, injecter);
-            }
-
-            foreach (var gameTaskType in this.usageCache.GetGameTaskList())
-            {
-                var injecter = new EventModifier();
-                injecter.eventType = gameTaskType;
-                injecter.assemblyDefinition = this.assemblyDefinition;
-                injecter.usageCache = this.usageCache;
-                injecter.logger = this.logger;
-                injecter.isGameTask = true;
-
-                this.eventModifierList.Add(gameTaskType, injecter);
             }
         }
 
@@ -77,6 +31,7 @@ namespace GameEvent
                 modifier.assemblyDefinition = this.assemblyDefinition;
                 modifier.eventUsageCollection = usage;
                 modifier.eventModifyProvider = this.GetEventModify;
+                modifier.AppendStaticMethodToRegisterBridge = this.AppendStaticMethodToRegisterBridge;
                 this.usageModifierList.Add(modifier);
             }
         }

@@ -26,8 +26,8 @@ namespace GameEvent
         public MethodReference eventRegister;
         // eventType 的 Unregister 注销方法
         public MethodReference eventUnregister;
-        // eventType 的 Static Invoker 方法
-        public MethodDefinition eventStaticInvoker;
+        // eventType 的 Static Register 方法
+        public MethodDefinition eventStaticRegister;
 
         // eventType 中 用于存事件的 Action<>
         public FieldDefinition actionField;
@@ -45,7 +45,7 @@ namespace GameEvent
 
             this.Generate_Register();
             this.Generate_Unregister();
-            this.Generate_StaticInvoker();
+            this.Generate_StaticRegister();
 
             this.OverridToString();
         }
@@ -222,24 +222,34 @@ namespace GameEvent
             this.eventUnregister = methodUnregister;
         }
 
-        private void Generate_StaticInvoker()
+        private void Generate_StaticRegister()
         {
-            var methodName = "__StaticInvoker__";
-            var methodAttri = MethodAttributes.Private;
+            var methodName = "__StaticRegister__";
+            var methodAttri = MethodAttributes.Public;
             methodAttri |= MethodAttributes.HideBySig;
             methodAttri |= MethodAttributes.Static;
             var methodRet = assemblyDefinition.MainModule.ImportReference(typeof(void));
-            var methodParam = new ParameterDefinition(this.eventType);
+            var methodParam = new ParameterDefinition(this.actionField.FieldType);
             methodParam.Name = "target";
 
-            var methodStaticInvoker = new MethodDefinition(methodName, methodAttri, methodRet);
-            methodStaticInvoker.Parameters.Add(methodParam);
+            var methodStaticRegister = new MethodDefinition(methodName, methodAttri, methodRet);
+            methodStaticRegister.Parameters.Add(methodParam);
 
-            var ilProcesser = methodStaticInvoker.Body.GetILProcessor();
+            var ilProcesser = methodStaticRegister.Body.GetILProcessor();
+
+            ilProcesser.Append(ilProcesser.Create(OpCodes.Ldsfld, this.actionField));
+            ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_0));
+
+            var delegateCombineMethod = typeof(System.Delegate).GetMethod("Combine", new Type[] { typeof(Delegate), typeof(Delegate) });
+            var delegateCombineMethodRef = assemblyDefinition.MainModule.ImportReference(delegateCombineMethod);
+            ilProcesser.Append(ilProcesser.Create(OpCodes.Call, delegateCombineMethodRef));
+
+            ilProcesser.Append(ilProcesser.Create(OpCodes.Castclass, this.actionField.FieldType));
+            ilProcesser.Append(ilProcesser.Create(OpCodes.Stsfld, this.actionField));
             ilProcesser.Append(ilProcesser.Create(OpCodes.Ret));
 
-            this.eventType.Methods.Add(methodStaticInvoker);
-            this.eventStaticInvoker = methodStaticInvoker;
+            this.eventType.Methods.Add(methodStaticRegister);
+            this.eventStaticRegister = methodStaticRegister;
         }
 
         private void OverridToString()
@@ -284,18 +294,18 @@ namespace GameEvent
             // GameEvent.isEventing = false
             ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldc_I4_0));
             ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Stsfld, isEventingField));
-            // __StaticInvoker__(this);
-            if (eventType.IsValueType)
-            {
-                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
-                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldobj, this.eventType));
-                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Call, this.eventStaticInvoker));
-            }
-            else
-            {
-                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
-                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Call, this.eventStaticInvoker));
-            }
+            // // __StaticInvoker__(this);
+            // if (eventType.IsValueType)
+            // {
+            //     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
+            //     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldobj, this.eventType));
+            //     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Call, this.eventStaticInvoker));
+            // }
+            // else
+            // {
+            //     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
+            //     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Call, this.eventStaticInvoker));
+            // }
 
             // Check __action__?
             ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldsfld, this.actionField));
@@ -340,32 +350,6 @@ namespace GameEvent
             this.eventType.Methods.Add(methodToString);
 
             return methodToString;
-        }
-
-        public void AppendStaticMethod(MethodReference method)
-        {
-            var ilProcesser = this.eventStaticInvoker.Body.GetILProcessor();
-            var count = this.eventStaticInvoker.Body.Instructions.Count;
-            var lastLine = this.eventStaticInvoker.Body.Instructions[count - 1];
-
-            if (this.isGameTask)
-            {
-                var taskListField = typeof(GameEventDriver).GetField("taskList", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
-                var taskListField_Ref = assemblyDefinition.MainModule.ImportReference(taskListField);
-                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldsfld, taskListField_Ref));
-
-                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldarg_0));
-                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, method));
-
-                var addTaskMethod = typeof(List<Task>).GetMethod("Add", new[] { typeof(Task) });
-                var addTaskMethod_Ref = assemblyDefinition.MainModule.ImportReference(addTaskMethod);
-                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Callvirt, addTaskMethod_Ref));
-            }
-            else
-            {
-                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldarg_0));
-                ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, method));
-            }
         }
     }
 }

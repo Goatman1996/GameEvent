@@ -13,17 +13,21 @@ namespace GameEvent
         public const string InjectedNameSpace = "GameEvent";
         public const string InjectedClazz = "___Injected___";
 
-        private static bool Initialized = false;
-        private static IRegisterBridge registerBridge;
+        private static List<string> registerBridge_Assembly = new List<string>();
+        private static List<IRegisterBridge> registerBridgeList = new List<IRegisterBridge>();
 
         public static void Initialize(string assemblyName)
         {
+            if (registerBridge_Assembly.Contains(assemblyName)) return;
+
             var assembly = Assembly.Load(assemblyName);
             var type = assembly.GetType($"{InjectedNameSpace}.{InjectedClazz}", true);
             if (type != null)
             {
-                registerBridge = Activator.CreateInstance(type) as IRegisterBridge;
-                Initialized = true;
+                var registerBridge = Activator.CreateInstance(type) as IRegisterBridge;
+                registerBridge.StaticRegister();
+                registerBridge_Assembly.Add(assemblyName);
+                registerBridgeList.Add(registerBridge);
             }
         }
 
@@ -70,7 +74,11 @@ namespace GameEvent
                     if (mono == null) continue;
                     if (mono.gameObject.scene.isLoaded == false) continue;
                 }
-                registerBridge.Register(target);
+                for (int j = 0; j < registerBridgeList.Count; j++)
+                {
+                    var registerBridge = registerBridgeList[j];
+                    registerBridge.Register(target);
+                }
             }
             unCheckAssetList.Clear();
             needCheckAsset = false;
@@ -81,7 +89,11 @@ namespace GameEvent
             for (int i = 0; i < willRemoveList.Count; i++)
             {
                 var target = willRemoveList[i];
-                registerBridge.Unregister(target);
+                for (int j = 0; j < registerBridgeList.Count; j++)
+                {
+                    var registerBridge = registerBridgeList[j];
+                    registerBridge.Unregister(target);
+                }
             }
             willRemoveList.Clear();
             hasWilRemove = false;
