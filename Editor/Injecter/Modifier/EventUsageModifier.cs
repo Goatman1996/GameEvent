@@ -197,7 +197,8 @@ namespace GameEvent
 
         private MethodDefinition Inject_Event_iInvoker(EventModifier eventModifier)
         {
-            var iInvoker = new InterfaceImplementation(eventModifier.eventiInvoker);
+            var eventiInvoker = this.declaringType.Module.ImportReference(eventModifier.eventiInvoker);
+            var iInvoker = new InterfaceImplementation(eventiInvoker);
             this.declaringType.Interfaces.Add(iInvoker);
 
             var inInterfaceMethod = eventModifier.eventiInvoker_Invoke;
@@ -213,7 +214,8 @@ namespace GameEvent
             var methodInvoke = new MethodDefinition(methodName, methodAttri, methodRet);
             foreach (var otiginalP in inInterfaceMethod.Parameters)
             {
-                var p = new ParameterDefinition(otiginalP.ParameterType);
+                var importedParamType = this.declaringType.Module.ImportReference(otiginalP.ParameterType);
+                var p = new ParameterDefinition(importedParamType);
                 p.Name = otiginalP.Name;
                 methodInvoke.Parameters.Add(p);
             }

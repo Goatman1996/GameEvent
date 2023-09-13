@@ -10,21 +10,47 @@ namespace GameEvent
         private string iGameTaskFullName = typeof(IGameTask).FullName;
         private string taskFullPrefixName = typeof(System.Threading.Tasks.Task).FullName;
 
-        public AssemblyDefinition assemblyDefinition;
-
         private HashSet<TypeDefinition> iGameEventList = new HashSet<TypeDefinition>();
         private HashSet<TypeDefinition> iGameTaskList = new HashSet<TypeDefinition>();
 
-        private Dictionary<TypeDefinition, GameEventUsage> userType_EventUsage_Collection;
+        private Dictionary<TypeDefinition, GameEventUsage> userType_EventUsage_Collection = new Dictionary<TypeDefinition, GameEventUsage>();
 
-        public void BuildCache()
+        StringBuilder sb = new StringBuilder();
+        public string Print()
         {
-            userType_EventUsage_Collection = new Dictionary<TypeDefinition, GameEventUsage>();
+            sb.Clear();
 
+            sb.AppendLine("iGameEventList");
+            foreach (var e in iGameEventList)
+            {
+                sb.AppendLine(e.FullName);
+            }
+
+            sb.AppendLine("iGameTaskList");
+            foreach (var e in iGameTaskList)
+            {
+                sb.AppendLine(e.FullName);
+            }
+
+            sb.AppendLine("userType_EventUsage_Collection");
+            foreach (var e in userType_EventUsage_Collection)
+            {
+                sb.AppendLine($"{e.Key.FullName}");
+            }
+
+            return sb.ToString();
+        }
+
+
+        public void BuildEventCache(AssemblyDefinition assemblyDefinition)
+        {
             foreach (var type in assemblyDefinition.MainModule.Types)
             {
                 this.CachingIGameEvent(type);
             }
+        }
+        public void BuildUsageCache(AssemblyDefinition assemblyDefinition)
+        {
             foreach (var type in assemblyDefinition.MainModule.Types)
             {
                 this.TryCachingUsage(type);
@@ -38,17 +64,38 @@ namespace GameEvent
                 this.CachingIGameEvent(nestedType);
             }
 
+            if (CheckingIsEvent(type))
+            {
+                this.iGameEventList.Add(type);
+            }
+            if (CheckingIsTask(type))
+            {
+                this.iGameTaskList.Add(type);
+            }
+        }
+
+        private bool CheckingIsEvent(TypeDefinition type)
+        {
             foreach (var iface in type.Interfaces)
             {
                 if (iface.InterfaceType.FullName == iGameEventFullName)
                 {
-                    this.iGameEventList.Add(type);
-                }
-                if (iface.InterfaceType.FullName == iGameTaskFullName)
-                {
-                    this.iGameTaskList.Add(type);
+                    return true;
                 }
             }
+            return false;
+        }
+
+        private bool CheckingIsTask(TypeDefinition type)
+        {
+            foreach (var iface in type.Interfaces)
+            {
+                if (iface.InterfaceType.FullName == iGameTaskFullName)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void TryCachingUsage(TypeDefinition type)
@@ -58,13 +105,9 @@ namespace GameEvent
                 this.TryCachingUsage(nestedType);
             }
 
-            var isClass = type.IsClass;
-            var isValueType = type.IsValueType;
-
             foreach (var method in type.Methods)
             {
                 if (this.MethodHasGameEventAttribute(type, method, out bool CallOnlyIfMonoEnable) == false) continue;
-
                 if (this.MethodParamOnlyGameEvent(method))
                 {
                     this.CachingGameEventUsage(method, CallOnlyIfMonoEnable);
@@ -119,7 +162,7 @@ namespace GameEvent
             var onlyParam = method.Parameters[0];
             var paramDef = onlyParam.ParameterType.Resolve();
 
-            return this.iGameEventList.Contains(paramDef);
+            return this.CheckingIsEvent(paramDef);
         }
 
         private bool MethodParamOnlyGameTask(MethodDefinition method)
@@ -133,7 +176,7 @@ namespace GameEvent
             var onlyParam = method.Parameters[0];
             var paramDef = onlyParam.ParameterType.Resolve();
 
-            return this.iGameTaskList.Contains(paramDef);
+            return this.CheckingIsTask(paramDef);
         }
 
         private GameEventUsage GetOrCreate(TypeDefinition typeDef)

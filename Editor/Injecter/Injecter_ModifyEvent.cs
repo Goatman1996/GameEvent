@@ -19,10 +19,14 @@ namespace GameEvent
 
         private EventModifier GetEventModify(TypeDefinition eventType)
         {
-            if (this.eventModifierList.ContainsKey(eventType))
+            foreach (var kv in this.eventModifierList)
             {
-                return this.eventModifierList[eventType];
+                var modifierType = kv.Key;
+                if (eventType.FullName != modifierType.FullName) continue;
+                if (eventType.Module.Name != modifierType.Module.Name) continue;
+                return kv.Value;
             }
+
             return null;
         }
 
@@ -32,6 +36,10 @@ namespace GameEvent
 
             foreach (var gameEventType in this.usageCache.GetGameEventList())
             {
+                if (gameEventType.Module != this.assemblyDefinition.MainModule)
+                {
+                    continue;
+                }
                 var injecter = new EventModifier();
                 injecter.eventType = gameEventType;
                 injecter.assemblyDefinition = this.assemblyDefinition;
@@ -44,6 +52,10 @@ namespace GameEvent
 
             foreach (var gameTaskType in this.usageCache.GetGameTaskList())
             {
+                if (gameTaskType.Module != this.assemblyDefinition.MainModule)
+                {
+                    continue;
+                }
                 var injecter = new EventModifier();
                 injecter.eventType = gameTaskType;
                 injecter.assemblyDefinition = this.assemblyDefinition;

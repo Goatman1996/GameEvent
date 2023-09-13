@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -8,9 +9,10 @@ namespace GameEvent
     {
         private List<EventUsageModifier> usageModifierList = new List<EventUsageModifier>();
 
-        private void ModifyUsage()
+        private void ModifyUsage(Func<TypeDefinition, EventModifier> modifierProvider)
         {
-            this.CollectEventUsageModifier();
+            this.CollectEventUsageModifier(modifierProvider);
+
             foreach (var modifier in this.usageModifierList)
             {
                 var needInjectCTOR = modifier.Modify();
@@ -21,16 +23,20 @@ namespace GameEvent
             }
         }
 
-        private void CollectEventUsageModifier()
+        private void CollectEventUsageModifier(Func<TypeDefinition, EventModifier> modifierProvider)
         {
             this.usageModifierList.Clear();
 
             foreach (var usage in this.usageCache.GetGameEventUsage())
             {
+                if (usage.usageType.Module != this.assemblyDefinition.MainModule)
+                {
+                    continue;
+                }
                 var modifier = new EventUsageModifier();
                 modifier.assemblyDefinition = this.assemblyDefinition;
                 modifier.eventUsageCollection = usage;
-                modifier.eventModifyProvider = this.GetEventModify;
+                modifier.eventModifyProvider = modifierProvider;
                 modifier.AppendStaticMethodToRegisterBridge = this.AppendStaticMethodToRegisterBridge;
                 this.usageModifierList.Add(modifier);
             }

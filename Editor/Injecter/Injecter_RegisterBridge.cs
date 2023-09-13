@@ -1,6 +1,7 @@
 using System;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using System.Linq;
 
 namespace GameEvent
 {
@@ -10,23 +11,35 @@ namespace GameEvent
         private MethodDefinition registerMethod;
         private MethodDefinition unregisterMethod;
         private MethodDefinition staticRegisterMethod;
+        private bool injectedBridge = false;
 
         private void InjectBridge()
         {
             var InjectedNameSpace = GameEventDriver.InjectedNameSpace;
             var InjectedClazz = GameEventDriver.InjectedClazz;
-            var typeAttri = TypeAttributes.Class | TypeAttributes.Public;
-            var baseType = assemblyDefinition.MainModule.TypeSystem.Object;
 
-            var injectedTypeDef = new TypeDefinition(InjectedNameSpace, InjectedClazz, typeAttri, baseType);
+            var injectedFullName = $"{InjectedNameSpace}.{InjectedClazz}";
+            var has = assemblyDefinition.MainModule.Types.FirstOrDefault(t => t.FullName == injectedFullName);
+            if (has == null)
+            {
+                var typeAttri = TypeAttributes.Class | TypeAttributes.Public;
+                var baseType = assemblyDefinition.MainModule.TypeSystem.Object;
 
-            var PreserveCtor = typeof(UnityEngine.Scripting.PreserveAttribute).GetConstructors()[0];
-            var Preserve = new CustomAttribute(assemblyDefinition.MainModule.ImportReference(PreserveCtor));
-            injectedTypeDef.CustomAttributes.Add(Preserve);
+                var injectedTypeDef = new TypeDefinition(InjectedNameSpace, InjectedClazz, typeAttri, baseType);
 
-            assemblyDefinition.MainModule.Types.Add(injectedTypeDef);
+                var PreserveCtor = typeof(UnityEngine.Scripting.PreserveAttribute).GetConstructors()[0];
+                var Preserve = new CustomAttribute(assemblyDefinition.MainModule.ImportReference(PreserveCtor));
+                injectedTypeDef.CustomAttributes.Add(Preserve);
 
-            this.bridgeType = injectedTypeDef;
+                assemblyDefinition.MainModule.Types.Add(injectedTypeDef);
+
+                this.bridgeType = injectedTypeDef;
+            }
+            else
+            {
+                this.injectedBridge = true;
+                this.bridgeType = has;
+            }
 
             this.Generate_iRegisterBridge();
             this.Generate_CTOR();
@@ -37,6 +50,7 @@ namespace GameEvent
 
         private void Generate_iRegisterBridge()
         {
+            if (this.injectedBridge) return;
             // 添加IRegisterBridge接口
             var invokerTypeRef = assemblyDefinition.MainModule.ImportReference(typeof(GameEvent.IRegisterBridge));
             var invoker = new InterfaceImplementation(invokerTypeRef);
@@ -45,6 +59,7 @@ namespace GameEvent
 
         private void Generate_CTOR()
         {
+            if (this.injectedBridge) return;
             // 实现构造函数
             var CTOR_Name = ".ctor";
 
@@ -75,6 +90,7 @@ namespace GameEvent
 
         private void Generate_Register()
         {
+            if (this.injectedBridge) return;
             // 添加 Register
             var registerName = "Register";
 
@@ -102,8 +118,11 @@ namespace GameEvent
             var ilProcesser = registerMethod.Body.GetILProcessor();
             foreach (var eventModifier in this.eventModifierList.Values)
             {
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_1));
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, eventModifier.eventRegister));
+                if (eventModifier.eventType.Module == assemblyDefinition.MainModule)
+                {
+                    ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_1));
+                    ilProcesser.Append(ilProcesser.Create(OpCodes.Call, eventModifier.eventRegister));
+                }
             }
             ilProcesser.Append(ilProcesser.Create(OpCodes.Ret));
 
@@ -112,8 +131,10 @@ namespace GameEvent
             this.registerMethod = registerMethod;
         }
 
+
         private void Generate_Unregister()
         {
+            if (this.injectedBridge) return;
             // 添加 Unregister
             var unregisterName = "Unregister";
 
@@ -141,8 +162,11 @@ namespace GameEvent
             var ilProcesser = unregisterMethod.Body.GetILProcessor();
             foreach (var eventModifier in this.eventModifierList.Values)
             {
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_1));
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, eventModifier.eventUnregister));
+                if (eventModifier.eventType.Module == assemblyDefinition.MainModule)
+                {
+                    ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_1));
+                    ilProcesser.Append(ilProcesser.Create(OpCodes.Call, eventModifier.eventUnregister));
+                }
             }
             ilProcesser.Append(ilProcesser.Create(OpCodes.Ret));
 
@@ -155,6 +179,12 @@ namespace GameEvent
         {
             // 添加 Static Register
             var staticRegisterName = "StaticRegister";
+            var has = this.bridgeType.Methods.FirstOrDefault(m => m.Name == staticRegisterName);
+            if (has != null)
+            {
+                this.staticRegisterMethod = has;
+                return;
+            }
 
             var staticRegisterAttri = Mono.Cecil.MethodAttributes.Public;
             staticRegisterAttri |= Mono.Cecil.MethodAttributes.HideBySig;
@@ -173,17 +203,20 @@ namespace GameEvent
             this.staticRegisterMethod = staticRegisterMethod;
         }
 
-        public void AppendStaticMethodToRegisterBridge(MethodReference staticMethod, EventModifier targetEventModifier)
+        private void AppendStaticMethodToRegisterBridge(MethodReference staticMethod, EventModifier targetEventModifier)
         {
             var ilProcesser = this.staticRegisterMethod.Body.GetILProcessor();
             var count = this.staticRegisterMethod.Body.Instructions.Count;
             var lastLine = this.staticRegisterMethod.Body.Instructions[count - 1];
 
+            var refed_Action_CTOR = this.staticRegisterMethod.Module.ImportReference(targetEventModifier.action_CTOR);
+            var refed_eventStaticRegister = this.staticRegisterMethod.Module.ImportReference(targetEventModifier.eventStaticRegister);
+
             // EventModifier.StaticRegister(staticMethod);
             ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldnull));
             ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldftn, staticMethod));
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Newobj, targetEventModifier.action_CTOR));
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, targetEventModifier.eventStaticRegister));
+            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Newobj, refed_Action_CTOR));
+            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, refed_eventStaticRegister));
         }
     }
 }

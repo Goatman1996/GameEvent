@@ -17,36 +17,65 @@ namespace GameEvent
 
         private void Initialize_IO()
         {
-            this.backeupDir = Path.GetDirectoryName(this.dllPath) + "/Temp";
+            this.backeupDir = backUpTempDirName;
 
-            this.bakeDllPath = $"{this.backeupDir}/bak.dll";
-            this.bakPdbPath = $"{this.backeupDir}/bak.pdb";
+            this.bakeDllPath = $"{this.backeupDir}/bak_{this.dllNameNoExten}.dll";
+            this.bakPdbPath = $"{this.backeupDir}/bak_{this.dllNameNoExten}.pdb";
         }
+
+        public const String backUpTempDirName = "./Temp/GameEvent";
+        public static void DoBackUpDirCreateOneTime(string targetDir)
+        {
+            var backeupDir = backUpTempDirName;
+            if (Directory.Exists(backeupDir))
+            {
+                Directory.Delete(backeupDir, true);
+            }
+            Directory.CreateDirectory(backeupDir);
+            foreach (var file in Directory.GetFiles(targetDir))
+            {
+                var destFileName = Path.GetFileName(file);
+                File.Copy(file, backeupDir + $"/{destFileName}");
+            }
+        }
+
+        public static void DeleteBackUpOneTime(string targetDir)
+        {
+            // var backeupDir = backUpTempDirName;
+            // if (Directory.Exists(backeupDir))
+            // {
+            //     Directory.Delete(backeupDir, true);
+            // }
+        }
+
 
         private void BackUpDll()
         {
-            if (Directory.Exists(this.backeupDir))
-            {
-                Directory.Delete(this.backeupDir, true);
-            }
-            Directory.CreateDirectory(this.backeupDir);
-
             File.Copy(this.dllPath, this.bakeDllPath);
             File.Copy(this.pdbPath, this.bakPdbPath);
         }
 
         private DefaultAssemblyResolver CreateAssemblyResolver()
         {
+            var fullPath = Path.GetFullPath(this.dllPath);
+            var fullPathDir = Path.GetDirectoryName(fullPath);
+
             HashSet<string> searchDir = new HashSet<string>();
             foreach (var path in (from asm in AppDomain.CurrentDomain.GetAssemblies()
                                   select Path.GetDirectoryName(asm.ManifestModule.FullyQualifiedName)).Distinct())
             {
                 try
                 {
-                    // UnityEngine.Debug.Log(path);
-                    if (searchDir.Contains(path) == false)
+                    string targetPath = path;
+
+                    if (targetPath == fullPathDir)
                     {
-                        searchDir.Add(path);
+                        targetPath = backUpTempDirName;
+                    }
+                    if (searchDir.Contains(targetPath) == false)
+                    {
+                        // UnityEngine.Debug.Log(targetPath);
+                        searchDir.Add(targetPath);
                     }
                 }
                 catch { }
@@ -63,7 +92,7 @@ namespace GameEvent
 
         private void ReadDll()
         {
-            this.dllStream = new FileStream(this.bakeDllPath, FileMode.Open);
+            this.dllStream = new FileStream(this.bakeDllPath, FileMode.Open, FileAccess.ReadWrite);
 
             var assemblyResolver = this.CreateAssemblyResolver();
 
@@ -81,18 +110,12 @@ namespace GameEvent
             if (assemblyDefinition != null && assemblyDefinition.MainModule.SymbolReader != null)
             {
                 assemblyDefinition.MainModule.SymbolReader.Dispose();
+                assemblyDefinition.Dispose();
             }
             if (dllStream != null)
             {
                 dllStream.Close();
-            }
-        }
-
-        private void DeleteBackUp()
-        {
-            if (Directory.Exists(this.backeupDir))
-            {
-                Directory.Delete(this.backeupDir, true);
+                dllStream = null;
             }
         }
 
@@ -102,7 +125,6 @@ namespace GameEvent
             {
                 WriteSymbols = true,
             };
-
             assemblyDefinition.Write(this.dllPath, writeParam);
         }
     }

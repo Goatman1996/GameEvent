@@ -36,6 +36,8 @@ namespace GameEvent
         // Action<> 泛型实例 的 构造函数
         public MethodReference action_CTOR;
 
+        private bool injectedMark = false;
+
         public void Modify()
         {
             this.logger.AppendLine($"Modify [{this.eventType.Name}]");
@@ -54,6 +56,18 @@ namespace GameEvent
         {
             var typeNameSpace = "GameEvent";
             var typeName = $"{this.eventType.Name}_Invoker";
+            var typeFullName = $"{typeNameSpace}.{typeName}";
+
+            var has = this.assemblyDefinition.MainModule.Types.FirstOrDefault((t) => t.FullName == typeFullName);
+            if (has != null)
+            {
+                this.eventiInvoker = has;
+                this.eventiInvoker_Invoke = has.Methods.First((m) => m.Name == "Invoke");
+                injectedMark = true;
+                return;
+            }
+
+
 
             var typeAttri = TypeAttributes.Class;
             typeAttri |= TypeAttributes.Interface;
@@ -79,7 +93,7 @@ namespace GameEvent
 
                 iInvoker.Methods.Add(invoke);
 
-                eventiInvoker_Invoke = invoke;
+                this.eventiInvoker_Invoke = invoke;
             }
 
             this.assemblyDefinition.MainModule.Types.Add(iInvoker);
@@ -96,7 +110,16 @@ namespace GameEvent
             var fieldType = new GenericInstanceType(actionType);
             fieldType.GenericArguments.Add(eventType);
 
-            this.actionField = new FieldDefinition(fieldName, fieldAttri, fieldType);
+            var has = this.eventType.Fields.FirstOrDefault((f) => f.Name == fieldName);
+            if (has == null)
+            {
+                this.actionField = new FieldDefinition(fieldName, fieldAttri, fieldType);
+                this.eventType.Fields.Add(actionField);
+            }
+            else
+            {
+                this.actionField = has;
+            }
 
             {
                 // import  Action<GameEvent>.Invoke;
@@ -115,7 +138,7 @@ namespace GameEvent
                 {
                     genericInvoke.GenericParameters.Add(new GenericParameter(gp.Name, genericInvoke));
                 }
-                actionInvokeMethod = assemblyDefinition.MainModule.ImportReference(genericInvoke);
+                actionInvokeMethod = this.eventType.Module.ImportReference(genericInvoke);
             }
             {
                 // import  Action<GameEvent>.ctor;
@@ -134,15 +157,20 @@ namespace GameEvent
                 {
                     generic_CTOR.GenericParameters.Add(new GenericParameter(gp.Name, generic_CTOR));
                 }
-                this.action_CTOR = assemblyDefinition.MainModule.ImportReference(generic_CTOR);
+                this.action_CTOR = this.eventType.Module.ImportReference(generic_CTOR);
             }
-
-            this.eventType.Fields.Add(actionField);
         }
 
         private void Generate_Register()
         {
             var methodName = "__Register__";
+            var has = this.eventType.Methods.FirstOrDefault((m) => m.Name == methodName);
+            if (has != null)
+            {
+                this.eventRegister = has;
+                return;
+            }
+
             var methodAttri = MethodAttributes.Public;
             methodAttri |= MethodAttributes.HideBySig;
             methodAttri |= MethodAttributes.Static;
@@ -184,6 +212,13 @@ namespace GameEvent
         private void Generate_Unregister()
         {
             var methodName = "__Unregister__";
+            var has = this.eventType.Methods.FirstOrDefault(m => m.Name == methodName);
+            if (has != null)
+            {
+                this.eventUnregister = has;
+                return;
+            }
+
             var methodAttri = MethodAttributes.Public;
             methodAttri |= MethodAttributes.HideBySig;
             methodAttri |= MethodAttributes.Static;
@@ -225,6 +260,13 @@ namespace GameEvent
         private void Generate_StaticRegister()
         {
             var methodName = "__StaticRegister__";
+            var has = this.eventType.Methods.FirstOrDefault(m => m.Name == methodName);
+            if (has != null)
+            {
+                this.eventStaticRegister = has;
+                return;
+            }
+
             var methodAttri = MethodAttributes.Public;
             methodAttri |= MethodAttributes.HideBySig;
             methodAttri |= MethodAttributes.Static;
@@ -254,6 +296,10 @@ namespace GameEvent
 
         private void OverridToString()
         {
+            if (injectedMark)
+            {
+                return;
+            }
             MethodDefinition toStringMethod = null;
             foreach (var method in this.eventType.Methods)
             {
@@ -275,7 +321,8 @@ namespace GameEvent
                 toStringMethod = CreateOverrideToString();
             }
 
-            var isEventingField = assemblyDefinition.MainModule.ImportReference(typeof(GameEventDriver).GetField("isEventing"));
+            var isEventing = typeof(GameEventDriver).GetField("isEventing");
+            var isEventingField = this.eventType.Module.ImportReference(isEventing);
 
 
             var ilProcesser = toStringMethod.Body.GetILProcessor();
@@ -294,18 +341,6 @@ namespace GameEvent
             // GameEvent.isEventing = false
             ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldc_I4_0));
             ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Stsfld, isEventingField));
-            // // __StaticInvoker__(this);
-            // if (eventType.IsValueType)
-            // {
-            //     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
-            //     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldobj, this.eventType));
-            //     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Call, this.eventStaticInvoker));
-            // }
-            // else
-            // {
-            //     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
-            //     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Call, this.eventStaticInvoker));
-            // }
 
             // Check __action__?
             ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldsfld, this.actionField));

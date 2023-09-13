@@ -1,62 +1,71 @@
 using System;
 using System.IO;
+using Mono.Cecil;
 
 namespace GameEvent
 {
     public partial class Injecter
     {
+        public string DllPath { get => this.dllPath; }
         private string dllPath;
+        private string dllNameNoExten;
         private string pdbPath;
         public Injecter(string dllPath)
         {
             this.dllPath = dllPath;
+            this.dllNameNoExten = Path.GetFileNameWithoutExtension(this.dllPath);
             this.pdbPath = Path.ChangeExtension(this.dllPath, ".pdb");
-
-            this.Initialize_IO();
         }
 
-        public void Inject()
+        public void PrepareIo()
         {
             this.logger.AppendLine($"[GameEvent] 开始注入");
 
+            this.Initialize_IO();
             this.BackUpDll();
             this.ReadDll();
-            try
+        }
+
+        public bool hasInjected;
+
+        public void CheckInjected()
+        {
+            this.hasInjected = this.HasInjected();
+        }
+
+        public Func<TypeDefinition, EventModifier> BuildEventModifier()
+        {
+            // 修改 事件
+            this.ModifyGameEvent();
+
+            return this.GetEventModify;
+        }
+
+        public void BuildRegisterBridge()
+        {
+            // 创建 RegisterBridge
+            this.InjectBridge();
+        }
+
+        public void InjectUsage(Func<TypeDefinition, EventModifier> provider)
+        {
+            if (this.hasInjected == false)
             {
-                var injected = this.HasInjected();
-                if (injected)
-                {
-                    this.EnsureIoClose();
-                    this.DeleteBackUp();
-                    return;
-                }
-                // 构建 事件 相关的使用 并 缓存
-                this.BuildUsageCache();
-                // 修改 事件
-                this.ModifyGameEvent();
-                // 创建 RegisterBridge
-                this.InjectBridge();
-                // 修改 事件 使用者
-                this.ModifyUsage();
+                this.ModifyUsage(provider);
+            }
+        }
 
-
-
+        public void Write()
+        {
+            if (this.hasInjected == false)
+            {
                 this.WriteDll();
+            }
+        }
 
-                this.logger.AppendLine($"[GameEvent] 注入完成");
-                this.logger.Print();
-            }
-            catch (Exception e)
-            {
-                this.logger.PrintError();
-                UnityEngine.Debug.LogException(e);
-            }
-            finally
-            {
-                this.EnsureIoClose();
-                this.DeleteBackUp();
-            }
-
+        public void EnsureClose()
+        {
+            this.EnsureIoClose();
         }
     }
 }

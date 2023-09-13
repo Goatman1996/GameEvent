@@ -13,6 +13,8 @@ namespace GameEvent
 
             var injected = assemblyDefinition.MainModule.Types.Any((t)
                 => t.FullName == injectedFullName);
+
+
             return injected;
         }
     }
