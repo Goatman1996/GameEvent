@@ -65,7 +65,7 @@ namespace GameEvent
                 }
                 if (isAllInjected)
                 {
-                    Debug.Log("跳过");
+                    // Debug.Log("跳过");
                     goto Finish;
                 }
 
@@ -112,7 +112,7 @@ namespace GameEvent
                     injecter.EnsureClose();
                 }
             Finish:
-                Debug.Log("完成");
+                Debug.Log("[GameEvent] 注入完成");
             }
             catch (Exception e)
             {

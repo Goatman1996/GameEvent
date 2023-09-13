@@ -32,6 +32,8 @@ namespace GameEvent
             foreach (var eventType in eventTypeList)
             {
                 var eventModify = this.eventModifyProvider.Invoke(eventType);
+                if (eventModify == null) continue;
+
                 var methodList = this.eventUsageCollection.TryGetEventTypeUsage(eventType, true, false);
                 if (methodList == null)
                 {
@@ -92,16 +94,18 @@ namespace GameEvent
             bool hasAnyInstanceMethod = false;
             foreach (var eventType in eventTypeList)
             {
+                var eventModifier = this.eventModifyProvider.Invoke(eventType);
+                if (eventModifier == null) continue;
+
                 hasAnyInstanceMethod = true;
-                this.InjectInstanceInvoker(eventType);
+                this.InjectInstanceInvoker(eventType, eventModifier);
             }
 
             return hasAnyInstanceMethod;
         }
 
-        private void InjectInstanceInvoker(TypeDefinition eventType)
+        private void InjectInstanceInvoker(TypeDefinition eventType, EventModifier eventModifier)
         {
-            var eventModifier = this.eventModifyProvider.Invoke(eventType);
             var isGameTask = eventModifier.isGameTask;
             var iInvoke = this.Inject_Event_iInvoker(eventModifier);
 
