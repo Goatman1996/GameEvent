@@ -7,6 +7,7 @@ namespace GameEvent
     public class MethodUsageCache
     {
         private string iGameEventFullName = typeof(IGameEvent).FullName;
+        private string eventFullName = typeof(void).FullName;
         private string iGameTaskFullName = typeof(IGameTask).FullName;
         private string taskFullPrefixName = typeof(System.Threading.Tasks.Task).FullName;
 
@@ -158,6 +159,9 @@ namespace GameEvent
         {
             var methodParamCount = method.Parameters.Count;
             if (methodParamCount != 1) return false;
+
+            var retType = method.ReturnType;
+            if (retType.FullName != eventFullName) return false;
 
             var onlyParam = method.Parameters[0];
             var paramDef = onlyParam.ParameterType.Resolve();
