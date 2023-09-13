@@ -50,7 +50,7 @@ namespace GameEvent
             var methodAttri = MethodAttributes.Public;
             methodAttri |= MethodAttributes.HideBySig;
             methodAttri |= MethodAttributes.Static;
-            var methodRet = method.ReturnType;
+            var methodRet = assemblyDefinition.MainModule.ImportReference(typeof(void));
 
             var methodWrapper = new MethodDefinition(methodName, methodAttri, methodRet);
 
