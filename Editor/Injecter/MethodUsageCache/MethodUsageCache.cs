@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Mono.Cecil;
+using UnityEngine;
 
 namespace GameEvent
 {
@@ -21,22 +22,23 @@ namespace GameEvent
         {
             sb.Clear();
 
-            sb.AppendLine("iGameEventList");
+            sb.AppendLine("[IGameEvent]".ToColor(Color.cyan));
             foreach (var e in iGameEventList)
             {
-                sb.AppendLine(e.FullName);
+                sb.AppendLine($" => {e.FullName}");
             }
 
-            sb.AppendLine("iGameTaskList");
+            sb.AppendLine("[IGameTask]".ToColor(Color.cyan));
             foreach (var e in iGameTaskList)
             {
-                sb.AppendLine(e.FullName);
+                sb.AppendLine($" => {e.FullName}");
             }
 
-            sb.AppendLine("userType_EventUsage_Collection");
+            sb.AppendLine("[Usage]".ToColor(Color.cyan));
             foreach (var e in userType_EventUsage_Collection)
             {
-                sb.AppendLine($"{e.Key.FullName}");
+                sb.AppendLine($" => {e.Key.FullName}");
+                sb.AppendLine($"{e.Value.Print()}");
             }
 
             return sb.ToString();

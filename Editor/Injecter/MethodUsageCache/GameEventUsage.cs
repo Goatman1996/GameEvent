@@ -155,5 +155,46 @@ namespace GameEvent
                 return ret;
             }
         }
+
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        public string Print()
+        {
+            sb.Clear();
+
+            var typeList = new HashSet<TypeDefinition>();
+            typeList.UnionWith(this.GetAllStaticEventAndTask());
+            typeList.UnionWith(this.GetAllInstanceEventAndTask());
+
+            foreach (var type in typeList)
+            {
+                var methodList = new List<MethodDefinition>();
+                {
+                    var list = this.TryGetEventTypeUsage(type, true, false);
+                    if (list != null)
+                    {
+                        methodList.AddRange(list);
+                    }
+                }
+                {
+                    var list = this.TryGetEventTypeUsage(type, false, false);
+                    if (list != null)
+                    {
+                        methodList.AddRange(list);
+                    }
+                }
+                {
+                    var list = this.TryGetEventTypeUsage(type, false, true);
+                    if (list != null)
+                    {
+                        methodList.AddRange(list);
+                    }
+                }
+                foreach (var method in methodList)
+                {
+                    sb.AppendLine($" ===> {method.FullName}");
+                }
+            }
+            return sb.ToString();
+        }
     }
 }

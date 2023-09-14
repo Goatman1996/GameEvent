@@ -85,7 +85,6 @@ namespace GameEvent
                 {
                     injecter.SetCache(usageCache);
                 }
-                // UnityEngine.Debug.Log(usageCache.Print());
                 foreach (var injecter in injectList.Values)
                 {
                     var modifierProvider = injecter.BuildEventModifier();
@@ -118,7 +117,8 @@ namespace GameEvent
             Finish:
                 if (GameEventSettings.Instance.needInjectedLog && !isJumping)
                 {
-                    Debug.Log("[GameEvent] 注入完成");
+                    var logContent = "[GameEvent] 注入完成".ToColor(Color.green);
+                    Debug.Log($"{logContent}\n{usageCache.Print()}");
                 }
             }
             catch (Exception e)
