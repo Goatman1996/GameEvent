@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 
 namespace GameEvent
 {
@@ -41,6 +42,19 @@ namespace GameEvent
             {
                 instance.Save();
             }
+
+            var noReloadBtn = Application.isPlaying || EditorApplication.isCompiling;
+
+            UnityEngine.GUI.enabled = noReloadBtn == false;
+            var needReload = GUILayout.Button("重新编译脚本\nRecompile & Reload Assembly");
+            if (needReload)
+            {
+                if (noReloadBtn == false)
+                {
+                    UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+                }
+            }
+            UnityEngine.GUI.enabled = true;
         }
 
     }

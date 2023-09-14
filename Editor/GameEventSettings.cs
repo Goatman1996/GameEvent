@@ -7,6 +7,8 @@ namespace GameEvent
     {
         [Header("包含了【事件的定义】及【事件的使用】的程序集，默认 Assembly-CSharp")]
         public List<string> assemblyList = new List<string>() { "Assembly-CSharp" };
+        [Header("打印注入成功的Log")]
+        public bool needInjectedLog;
 
         private static GameEventSettings _Instance;
         public static GameEventSettings Instance

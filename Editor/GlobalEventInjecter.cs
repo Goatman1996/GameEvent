@@ -28,6 +28,7 @@ namespace GameEvent
         private static StringBuilder reportSb;
         public static void InjectEvent(string dir, params string[] dllFileArray)
         {
+            bool isJumping = false;
             MethodUsageCache usageCache = new MethodUsageCache();
 
             Injecter.DoBackUpDirCreateOneTime(dir);
@@ -40,6 +41,8 @@ namespace GameEvent
 
                 var dllPath = $"{dir}/{dllFileName}";
                 dllPath = Path.ChangeExtension(dllPath, ".dll");
+                if (File.Exists(dllPath) == false) continue;
+
                 var injecter = new Injecter(dllPath);
                 injectList.Add(dllFileName, injecter);
             }
@@ -65,6 +68,7 @@ namespace GameEvent
                 }
                 if (isAllInjected)
                 {
+                    isJumping = true;
                     // Debug.Log("跳过");
                     goto Finish;
                 }
@@ -112,7 +116,10 @@ namespace GameEvent
                     injecter.EnsureClose();
                 }
             Finish:
-                Debug.Log("[GameEvent] 注入完成");
+                if (GameEventSettings.Instance.needInjectedLog && !isJumping)
+                {
+                    Debug.Log("[GameEvent] 注入完成");
+                }
             }
             catch (Exception e)
             {

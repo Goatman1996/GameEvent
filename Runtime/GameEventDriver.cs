@@ -16,12 +16,23 @@ namespace GameEvent
         private static List<string> registerBridge_Assembly = new List<string>();
         private static List<IRegisterBridge> registerBridgeList = new List<IRegisterBridge>();
 
+        [Obsolete("Use Initialize(string assemblyName, bool throwOnError) Instead", true)]
         public static void Initialize(string assemblyName)
+        {
+            InternalInitialize(assemblyName, true);
+        }
+
+        public static void Initialize(string assemblyName, bool throwOnError)
+        {
+            InternalInitialize(assemblyName, throwOnError);
+        }
+
+        public static void InternalInitialize(string assemblyName, bool throwOnError)
         {
             if (registerBridge_Assembly.Contains(assemblyName)) return;
 
             var assembly = Assembly.Load(assemblyName);
-            var type = assembly.GetType($"{InjectedNameSpace}.{InjectedClazz}", true);
+            var type = assembly.GetType($"{InjectedNameSpace}.{InjectedClazz}", throwOnError);
             if (type != null)
             {
                 var registerBridge = Activator.CreateInstance(type) as IRegisterBridge;
