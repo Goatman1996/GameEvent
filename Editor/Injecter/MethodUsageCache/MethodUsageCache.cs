@@ -17,6 +17,8 @@ namespace GameEvent
 
         private Dictionary<TypeDefinition, GameEventUsage> userType_EventUsage_Collection = new Dictionary<TypeDefinition, GameEventUsage>();
 
+        private List<MethodDefinition> notPassLintUsage = new List<MethodDefinition>();
+
         StringBuilder sb = new StringBuilder();
         public string Print()
         {
@@ -41,6 +43,11 @@ namespace GameEvent
                 sb.AppendLine($"{e.Value.Print()}");
             }
 
+            sb.AppendLine("[Not Pass Lint]".ToColor(Color.yellow));
+            foreach (var notPassLint in notPassLintUsage)
+            {
+                sb.AppendLine($" => {notPassLint.FullName}");
+            }
             return sb.ToString();
         }
 
@@ -111,13 +118,21 @@ namespace GameEvent
             foreach (var method in type.Methods)
             {
                 if (this.MethodHasGameEventAttribute(type, method, out bool CallOnlyIfMonoEnable) == false) continue;
+
+                bool passLint = false;
                 if (this.MethodParamOnlyGameEvent(method))
                 {
                     this.CachingGameEventUsage(method, CallOnlyIfMonoEnable);
+                    passLint = true;
                 }
                 if (this.MethodParamOnlyGameTask(method))
                 {
                     this.CachingGameTaskUsage(method, CallOnlyIfMonoEnable);
+                    passLint = true;
+                }
+                if (passLint == false)
+                {
+                    this.notPassLintUsage.Add(method);
                 }
             }
         }
