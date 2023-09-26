@@ -13,15 +13,19 @@ namespace GameEvent
         [SettingsProvider]
         public static SettingsProvider GetSettings()
         {
-            return new GameEventSettingsProvider("Project/GameEventSettings", SettingsScope.Project);
+            var settings = new GameEventSettingsProvider("Project/GameEventSettings", SettingsScope.Project);
+            settings.instance = GameEventSettings.Instance;
+            settings.m_SerializedObject = new SerializedObject(settings.instance);
+            return settings;
         }
+
+        GameEventSettings instance;
+        SerializedObject m_SerializedObject;
+
 
         public override void OnGUI(string searchContext)
         {
-            var instance = GameEventSettings.Instance;
-
             EditorGUI.BeginChangeCheck();
-            SerializedObject m_SerializedObject = new SerializedObject(instance);
             m_SerializedObject.Update();
             SerializedProperty m_SerializedProperty = m_SerializedObject.GetIterator();
 
@@ -31,12 +35,7 @@ namespace GameEvent
             EditorGUI.PropertyField(rect, m_SerializedProperty);
             UnityEngine.GUI.enabled = true;
 
-#if UNITY_2021_1_OR_NEWER
-            while (m_SerializedProperty.NextVisible(true))
-#else
             while (m_SerializedProperty.NextVisible(false))
-#endif
-
             {
                 EditorGUILayout.PropertyField(m_SerializedProperty);
             }
