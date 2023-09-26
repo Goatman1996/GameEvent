@@ -1,6 +1,6 @@
 {
   "name": "com.gm.gameevent",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "displayName": "Game Event",
   "description": "Unity Game Event System",
   "unity": "2020.3",
