@@ -22,7 +22,6 @@ namespace GameEvent
         GameEventSettings instance;
         SerializedObject m_SerializedObject;
 
-
         public override void OnGUI(string searchContext)
         {
             EditorGUI.BeginChangeCheck();
