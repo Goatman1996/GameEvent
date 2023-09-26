@@ -31,7 +31,12 @@ namespace GameEvent
             EditorGUI.PropertyField(rect, m_SerializedProperty);
             UnityEngine.GUI.enabled = true;
 
+#if UNITY_2021_1_OR_NEWER
+            while (m_SerializedProperty.NextVisible(true))
+#else
             while (m_SerializedProperty.NextVisible(false))
+#endif
+
             {
                 EditorGUILayout.PropertyField(m_SerializedProperty);
             }
