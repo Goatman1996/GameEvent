@@ -27,7 +27,7 @@ namespace GameEvent
             InternalInitialize(assemblyName, throwOnError);
         }
 
-        public static void InternalInitialize(string assemblyName, bool throwOnError)
+        private static void InternalInitialize(string assemblyName, bool throwOnError)
         {
             if (registerBridge_Assembly.Contains(assemblyName)) return;
 
