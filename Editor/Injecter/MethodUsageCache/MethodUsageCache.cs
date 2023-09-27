@@ -174,6 +174,8 @@ namespace GameEvent
 
         private bool MethodParamOnlyGameEvent(MethodDefinition method)
         {
+            if (method.DeclaringType.HasGenericParameters) return false;
+
             var methodParamCount = method.Parameters.Count;
             if (methodParamCount != 1) return false;
 
@@ -188,6 +190,8 @@ namespace GameEvent
 
         private bool MethodParamOnlyGameTask(MethodDefinition method)
         {
+            if (method.DeclaringType.HasGenericParameters) return false;
+
             var methodParamCount = method.Parameters.Count;
             if (methodParamCount != 1) return false;
 
