@@ -138,13 +138,18 @@ namespace GameEvent
         }
 
         [UnityEditor.Callbacks.PostProcessScene]
-        public static void AutoInjectAssemblys()
+        private static void AutoInjectAssemblys()
         {
             var targetDir = "./Library/PlayerScriptAssemblies";
-            if (Directory.Exists(targetDir))
+            if (!Directory.Exists(targetDir))
             {
-                GameEvent.GlobalEventInjecter.InjectEvent(targetDir, GameEventSettings.Instance.assemblyList.ToArray());
+                targetDir = "./Library/Bee/PlayerScriptAssemblies";
             }
+            if (!Directory.Exists(targetDir))
+            {
+                targetDir = "./Library/ScriptAssemblies";
+            }
+            GameEvent.GlobalEventInjecter.InjectEvent(targetDir, GameEventSettings.Instance.assemblyList.ToArray());
         }
     }
 }
