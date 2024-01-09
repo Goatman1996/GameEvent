@@ -25,6 +25,11 @@ namespace GameEvent
         public override void OnGUI(string searchContext)
         {
             EditorGUI.BeginChangeCheck();
+            if (m_SerializedObject == null || instance == null)
+            {
+                this.instance = GameEventSettings.Instance;
+                this.m_SerializedObject = new SerializedObject(this.instance);
+            }
             m_SerializedObject.Update();
             SerializedProperty m_SerializedProperty = m_SerializedObject.GetIterator();
 
