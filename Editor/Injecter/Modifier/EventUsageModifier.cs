@@ -16,6 +16,7 @@ namespace GameEvent
 
         public TypeDefinition declaringType { get => this.eventUsageCollection.usageType; }
         private bool isMono { get => this.eventUsageCollection.isMono; }
+        private MethodDefinition Customize_op_Implicit_ { get => this.eventUsageCollection.Customize_op_Implicit_; }
         private MethodReference InstanceMethod;
         private MethodReference MonoEnableMethod;
 
@@ -120,6 +121,10 @@ namespace GameEvent
                 ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_0));
                 var monoIsExist = typeof(UnityEngine.Object).GetMethod("op_Implicit");
                 var monoIsExist_Ref = assemblyDefinition.MainModule.ImportReference(monoIsExist);
+                if (this.Customize_op_Implicit_ != null)
+                {
+                    monoIsExist_Ref = assemblyDefinition.MainModule.ImportReference(this.Customize_op_Implicit_);
+                }
                 ilProcesser.Append(ilProcesser.Create(OpCodes.Call, monoIsExist_Ref));
                 ilProcesser.Append(ilProcesser.Create(OpCodes.Brfalse_S, monoBlockFirstLine));
             }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Mono.Cecil;
 using UsageCollection = System.Collections.Generic.Dictionary<Mono.Cecil.TypeDefinition, System.Collections.Generic.List<Mono.Cecil.MethodDefinition>>;
+using System.Linq;
 
 namespace GameEvent
 {
@@ -18,6 +19,15 @@ namespace GameEvent
                     this._isMono = this.TypeIsMono(this.usageType);
                 }
                 return this._isMono.Value;
+            }
+        }
+
+        public MethodDefinition Customize_op_Implicit_
+        {
+            get
+            {
+                var _op_Implicit = this.usageType.Methods.FirstOrDefault(m => m.Name == "op_Implicit" && m.ReturnType.FullName == "System.Boolean");
+                return _op_Implicit;
             }
         }
 
