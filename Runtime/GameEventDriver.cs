@@ -50,6 +50,11 @@ namespace GameEvent
 
         public static void Register(object target)
         {
+            var index = unCheckAssetList.IndexOf(target);
+            if (index >= 0)
+            {
+                unCheckAssetList.RemoveAt(index);
+            }
             unCheckAssetList.Add(target);
             needCheckAsset = true;
         }
