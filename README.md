@@ -20,11 +20,11 @@ private void OnSomeEvt(SomeEvt evt)
     Debug.Log("SomeEvt happened");
 }
 
+using GameEvent;
 private void SomeMethod()
 {
-    var evt = new SomeEvt();
     // 发起 SomeEvt 事件
-    // 需要using GameEvent;
+    var evt = new SomeEvt();
     evt.Invoke();
 }
 ```
@@ -94,7 +94,7 @@ public struct AsyncEvt : GameEvent.IGameTask
 ### 订阅事件
 [GameEvent.GameEvent]属性
 
-参数 (bool CallOnlyIfMonoEnable = false) 意为，当该函数的所有对象是MonoBehaviour时，会额外判断，MonoBehaviour是否Enable，Enable=true时才会被触发事件
+参数 (bool CallOnlyIfMonoEnable = false) 意为，当该函数的所属对象是MonoBehaviour时，会额外判断，MonoBehaviour是否Enable，Enable=true时才会被触发事件
 
 注：订阅事件，是以对象为单位的，即某个对象的订阅和取消订阅，会将对象上的所有Game Event，统一订阅或取消
 
