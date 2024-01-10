@@ -171,14 +171,16 @@ GameEvent.GameEventDriver.Unregister(object target);
 
 1，同步事件
 ```csharp
+using GameEvent;
+
 var evt = new SyncEvt();
-// 需要using GameEvent;
 evt.Invoke();
 ```
 2，异步事件
 ```csharp
+using GameEvent;
+
 var evt = new AsyncEvt();
-// 需要using GameEvent;
 await evt.InvokeTask();
 ```
 
