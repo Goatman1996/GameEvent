@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -31,7 +32,24 @@ namespace GameEvent
         {
             if (registerBridge_Assembly.Contains(assemblyName)) return;
 
-            var assembly = Assembly.Load(assemblyName);
+            Assembly assembly = null;
+            try
+            {
+                assembly = Assembly.Load(assemblyName);
+            }
+            catch (FileNotFoundException e)
+            {
+                if (throwOnError) throw e;
+                else Debug.LogError($"Not Found Assembly {assemblyName}");
+                return;
+            }
+            catch (Exception e)
+            {
+                if (throwOnError) throw e;
+                else Debug.LogException(e);
+                return;
+            }
+
             var type = assembly.GetType($"{InjectedNameSpace}.{InjectedClazz}", throwOnError);
             if (type != null)
             {
