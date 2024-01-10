@@ -196,6 +196,71 @@ GameEvent.GlobalEventInjecter.InjectEvent(string dir, params string[] dllFileArr
 // dllFileArray 为 GameEventSettings.AssemblyList 中填写的程序集名称
 ```
 
+### 性能
+测试 10000000 千万次 的调起事件（Editor环境中，空方法）
+
+``` csharp
+[仅使用GameEvent]
+OnlyNullEvt : 87ms
+[使用GameEvent(true)]
+WithEnableEvt : 369ms
+[在非MonoBehaviour中使用GameEvent]
+NotMonoCall : 41ms
+[普通的反射]
+Reflection : 5441ms
+[直接调起方法]
+NativeCall : 4ms
+[借用Action，调起方法]
+ActionCall : 14ms
+```
+简单解析一下，在MonoBehaviour中使用Game Event，每次都需要检查MonoBehaviour是否为空
+
+而UnityEngine.Object的判空，是经过一系列复杂操作的，所以大部分耗时都在这里
+
+[在非MonoBehaviour中使用GameEvent]这一栏，算是纯净的消耗，耗时只有[借用Action，调起方法]的不到3倍，可以接受
+
+而[使用GameEvent(true)]这一栏，由于还要在判断MonoBehaviour是否Enable，所以耗时大大提升
+
+*注意这是千万级，一般使用完全不会成为性能阻碍
+
+如果认为性能是瓶颈，目前只有一个简单的优化方案
+
+为MonoBehaviour重写判空
+
+```csharp
+// 在某MonoBehaviour中写如下代码
+
+private bool IsAlive = true;
+// Does the object exist?
+public static implicit operator bool(MyMono exists)
+{
+    return exists.IsAlive;
+}
+
+private void OnDestroy()
+{
+    IsAlive = false;
+}
+```
+经过上述优化后，新的测试结果如下
+``` csharp
+[仅使用GameEvent]
+OnlyNullEvt : 48ms
+[使用GameEvent(true)]
+WithEnableEvt : 339ms
+[在非MonoBehaviour中使用GameEvent]
+NotMonoCall : 41ms
+[普通的反射]
+Reflection : 5441ms
+[直接调起方法]
+NativeCall : 4ms
+[借用Action，调起方法]
+ActionCall : 14ms
+```
+
+如果还是觉得性能有问题的话
+就.....
+
 ### 最后一些小问题
 
 当一个对象存在继承关系时
