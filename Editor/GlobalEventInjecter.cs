@@ -22,7 +22,14 @@ namespace GameEvent
         [UnityEditor.Callbacks.DidReloadScripts]
         private static void OnBeforeAssemblyReload()
         {
-            InjectEvent("./Library/ScriptAssemblies", GameEventSettings.Instance.assemblyList.ToArray());
+            try
+            {
+                InjectEvent("./Library/ScriptAssemblies", GameEventSettings.Instance.assemblyList.ToArray());
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogException(e);
+            }
         }
 
         private static StringBuilder reportSb;
