@@ -60,100 +60,59 @@ namespace GameEvent
             }
         }
 
-        private static List<object> unCheckAssetList = new List<object>(32);
-        private static bool needCheckAsset = false;
-
-        private static List<object> willRemoveList = new List<object>(32);
-        private static bool hasWilRemove = false;
-
-        public static void Register(object target)
+        public static void RegisterEvent<T>(Action<T> target) where T : IGameEvent
         {
-            var index = unCheckAssetList.IndexOf(target);
-            if (index >= 0)
-            {
-                unCheckAssetList.RemoveAt(index);
-            }
-            unCheckAssetList.Add(target);
-            needCheckAsset = true;
+            GameEvent<T>.Event += target;
         }
 
-        public static void Unregister(object target)
+        public static void UnregisterEvent<T>(Action<T> target) where T : IGameEvent
         {
-            var removed = unCheckAssetList.Remove(target);
-            if (removed == false)
-            {
-                hasWilRemove = true;
-                willRemoveList.Add(target);
-            }
+            GameEvent<T>.Event -= target;
+        }
+
+        public static void RegisterTask<T>(Func<T, Task> target) where T : IGameTask
+        {
+            GameTask<T>.Event += target;
+        }
+
+        public static void UnregisterTask<T>(Func<T, Task> target) where T : IGameTask
+        {
+            GameTask<T>.Event -= target;
         }
 
         public static void Invoke<T>(this T arg) where T : IGameEvent
         {
-            if (needCheckAsset) CheckAssetAndRegister();
-
-            isEventing = true;
-            arg.ToString();
-
-            if (hasWilRemove) DoRemove();
-        }
-
-        private static void CheckAssetAndRegister()
-        {
-            for (int i = 0; i < unCheckAssetList.Count; i++)
-            {
-                var target = unCheckAssetList[i];
-                if (target is MonoBehaviour)
-                {
-                    var mono = target as MonoBehaviour;
-                    if (mono == null) continue;
-                    if (mono.gameObject.scene.isLoaded == false) continue;
-                }
-                for (int j = 0; j < registerBridgeList.Count; j++)
-                {
-                    var registerBridge = registerBridgeList[j];
-                    registerBridge.Register(target);
-                }
-            }
-            unCheckAssetList.Clear();
-            needCheckAsset = false;
-        }
-
-        private static void DoRemove()
-        {
-            for (int i = 0; i < willRemoveList.Count; i++)
-            {
-                var target = willRemoveList[i];
-                for (int j = 0; j < registerBridgeList.Count; j++)
-                {
-                    var registerBridge = registerBridgeList[j];
-                    registerBridge.Unregister(target);
-                }
-            }
-            willRemoveList.Clear();
-            hasWilRemove = false;
+            GameEvent<T>.Invoke(arg);
         }
 
         private static bool isTasking = false;
         public static bool IsTasking { get => isTasking; }
         public static List<Task> taskList = new List<Task>();
+
         public static async Task InvokeTask<T>(this T arg) where T : IGameTask
         {
-            if (isTasking)
-            {
-                throw new Exception($"[GameEvent] Not Allow [InvokeTask] When Still Has Running Task.");
-            }
-            isTasking = true;
-            taskList.Clear();
+            await GameTask<T>.InvokeAsync(arg);
+            // if (isTasking)
+            // {
+            //     throw new Exception($"[GameEvent] Not Allow [InvokeTask] When Still Has Running Task.");
+            // }
+            // isTasking = true;
+            // taskList.Clear();
 
-            if (needCheckAsset) CheckAssetAndRegister();
+            // if (needCheckAsset) CheckAssetAndRegister();
 
-            isEventing = true;
-            arg.ToString();
+            // isEventing = true;
+            // arg.ToString();
 
-            if (hasWilRemove) DoRemove();
+            // if (hasWilRemove) DoRemove();
 
-            await Task.WhenAll(taskList);
-            isTasking = false;
+            // await Task.WhenAll(taskList);
+            // isTasking = false;
+        }
+
+        public static bool IsSceneObj(MonoBehaviour mono)
+        {
+            return !mono.gameObject.scene.isLoaded;
         }
     }
 }

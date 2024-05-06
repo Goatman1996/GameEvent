@@ -15,7 +15,7 @@ namespace GameEvent
         private HashSet<TypeDefinition> iGameEventList = new HashSet<TypeDefinition>();
         private HashSet<TypeDefinition> iGameTaskList = new HashSet<TypeDefinition>();
 
-        private Dictionary<TypeDefinition, GameEventUsage> userType_EventUsage_Collection = new Dictionary<TypeDefinition, GameEventUsage>();
+        public Dictionary<TypeDefinition, GameEventUsage> userType_EventUsage_Collection = new Dictionary<TypeDefinition, GameEventUsage>();
 
         private List<MethodDefinition> notPassLintUsage = new List<MethodDefinition>();
 

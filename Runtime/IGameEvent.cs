@@ -17,7 +17,7 @@ namespace GameEvent
     {
         public static event Action<T> Event;
 
-        internal void Invoke(T arg)
+        internal static void Invoke(T arg)
         {
             Event?.Invoke(arg);
         }
@@ -27,12 +27,15 @@ namespace GameEvent
     {
         public static event Func<T, Task> Event;
 
-        internal async Task InvokeAsync(T arg)
+        internal static async Task InvokeAsync(T arg)
         {
             foreach (var invoker in Event.GetInvocationList())
             {
                 var task = (Task)invoker?.DynamicInvoke(arg);
-                await task;
+                if (task != null)
+                {
+                    await task;
+                }
             }
         }
     }

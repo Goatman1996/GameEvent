@@ -9,7 +9,7 @@ namespace GameEvent
     public partial class Injecter
     {
         private FileStream dllStream;
-        private AssemblyDefinition assemblyDefinition;
+        public AssemblyDefinition assemblyDefinition;
 
         private string backeupDir;
         private string bakeDllPath;

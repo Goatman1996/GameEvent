@@ -92,27 +92,34 @@ namespace GameEvent
                 {
                     injecter.SetCache(usageCache);
                 }
+
                 foreach (var injecter in injectList.Values)
                 {
-                    var modifierProvider = injecter.BuildEventModifier();
-                    ModifierProviderList.Add(modifierProvider);
+                    injecter.New_InjectAllUsage();
                 }
-                foreach (var injecter in injectList.Values)
-                {
-                    injecter.BuildRegisterBridge();
-                }
-                foreach (var injecter in injectList.Values)
-                {
-                    injecter.InjectUsage((t) =>
-                    {
-                        foreach (var provider in ModifierProviderList)
-                        {
-                            var modifier = provider?.Invoke(t);
-                            if (modifier != null) return modifier;
-                        }
-                        return null;
-                    });
-                }
+
+
+                // foreach (var injecter in injectList.Values)
+                // {
+                //     var modifierProvider = injecter.BuildEventModifier();
+                //     ModifierProviderList.Add(modifierProvider);
+                // }
+                // foreach (var injecter in injectList.Values)
+                // {
+                //     injecter.BuildRegisterBridge();
+                // }
+                // foreach (var injecter in injectList.Values)
+                // {
+                //     injecter.InjectUsage((t) =>
+                //     {
+                //         foreach (var provider in ModifierProviderList)
+                //         {
+                //             var modifier = provider?.Invoke(t);
+                //             if (modifier != null) return modifier;
+                //         }
+                //         return null;
+                //     });
+                // }
                 foreach (var injecter in injectList.Values)
                 {
                     injecter.Write();

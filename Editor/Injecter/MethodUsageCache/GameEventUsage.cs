@@ -7,6 +7,7 @@ namespace GameEvent
 {
     public class GameEventUsage
     {
+        // 使用GameEvent的类
         public TypeDefinition usageType;
 
         private bool? _isMono;
@@ -48,9 +49,9 @@ namespace GameEvent
             return false;
         }
 
-        private UsageCollection event_Instance_Usage_Cache = new UsageCollection();
-        private UsageCollection event_Mono_Enable_Usage_Cache = new UsageCollection();
-        private UsageCollection event_Static_Usage_Cache = new UsageCollection();
+        public UsageCollection event_Instance_Usage_Cache = new UsageCollection();
+        public UsageCollection event_Mono_Enable_Usage_Cache = new UsageCollection();
+        public UsageCollection event_Static_Usage_Cache = new UsageCollection();
 
         private UsageCollection GetEventCollection(bool isStatic, bool CallOnlyIfMonoEnable)
         {
@@ -70,11 +71,9 @@ namespace GameEvent
             collection[eventType].Add(method);
         }
 
-
-
-        private UsageCollection task_Instance_Usage_Cache = new UsageCollection();
-        private UsageCollection task_Mono_Enable_Usage_Cache = new UsageCollection();
-        private UsageCollection task_Static_Usage_Cache = new UsageCollection();
+        public UsageCollection task_Instance_Usage_Cache = new UsageCollection();
+        public UsageCollection task_Mono_Enable_Usage_Cache = new UsageCollection();
+        public UsageCollection task_Static_Usage_Cache = new UsageCollection();
 
         private UsageCollection GetTaskCollection(bool isStatic, bool CallOnlyIfMonoEnable)
         {
