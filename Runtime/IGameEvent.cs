@@ -13,9 +13,9 @@ namespace GameEvent
 
     }
 
-    public class GameEvent<T> where T : IGameEvent
+    internal class GameEvent<T> where T : IGameEvent
     {
-        public static event Action<T> Event;
+        internal static event Action<T> Event;
 
         internal static void Invoke(T arg)
         {
@@ -23,12 +23,16 @@ namespace GameEvent
         }
     }
 
-    public class GameTask<T> where T : IGameTask
+    internal class GameTask<T> where T : IGameTask
     {
-        public static event Func<T, Task> Event;
+        internal static event Func<T, Task> Event;
 
         internal static async Task InvokeAsync(T arg)
         {
+            if (Event == null)
+            {
+                return;
+            }
             foreach (var invoker in Event.GetInvocationList())
             {
                 var task = (Task)invoker?.DynamicInvoke(arg);

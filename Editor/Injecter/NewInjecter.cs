@@ -217,8 +217,8 @@ namespace GameEvent
                 var methodList = kv.Value;
                 foreach (var method in methodList)
                 {
-                    var staticWrapper = NewGenerate_StaticMethod_Wrapper(method, false);
-                    NewAppendStaticEventToRegisterBridge(staticWrapper, eventType);
+                    var staticWrapper = NewGenerate_StaticMethod_Register_Wrapper(method, false, eventType);
+                    NewAppendStaticEventToRegisterBridge(staticWrapper);
                 }
             }
 
@@ -228,41 +228,73 @@ namespace GameEvent
                 var methodList = kv.Value;
                 foreach (var method in methodList)
                 {
-                    var staticWrapper = NewGenerate_StaticMethod_Wrapper(method, true);
-                    NewAppendStaticTaskToRegisterBridge(staticWrapper, eventType);
+                    var staticRegisterWrapper = NewGenerate_StaticMethod_Register_Wrapper(method, true, eventType);
+                    NewAppendStaticTaskToRegisterBridge(staticRegisterWrapper);
                 }
             }
         }
 
-        private MethodDefinition NewGenerate_StaticMethod_Wrapper(MethodDefinition method, bool isTask)
+        private MethodDefinition NewGenerate_StaticMethod_Register_Wrapper(MethodDefinition method, bool isTask, TypeReference eventType)
         {
             var methodName = $"{method.Name}__Wrapper";
             var methodAttri = Mono.Cecil.MethodAttributes.Public;
             methodAttri |= Mono.Cecil.MethodAttributes.HideBySig;
             methodAttri |= Mono.Cecil.MethodAttributes.Static;
-            var methodRet = assemblyDefinition.MainModule.ImportReference(typeof(void));
-            if (isTask)
-            {
-                methodRet = assemblyDefinition.MainModule.ImportReference(typeof(Task));
-            }
+
+            TypeReference methodRet = assemblyDefinition.MainModule.ImportReference(typeof(void));
+
+            // if (isTask)
+            // {
+            //     var actionType = assemblyDefinition.MainModule.ImportReference(typeof(Func<,>));
+            //     var fieldType = new GenericInstanceType(actionType);
+            //     fieldType.GenericArguments.Add(eventType);
+            //     fieldType.GenericArguments.Add(assemblyDefinition.MainModule.ImportReference(typeof(Task)));
+
+            //     methodRet = fieldType;
+            // }
+            // else
+            // {
+            //     var actionType = assemblyDefinition.MainModule.ImportReference(typeof(Action<>));
+            //     var fieldType = new GenericInstanceType(actionType);
+            //     fieldType.GenericArguments.Add(eventType);
+            //     methodRet = fieldType;
+            // }
 
             var methodWrapper = new MethodDefinition(methodName, methodAttri, methodRet);
 
-            var param = new ParameterDefinition(method.Parameters[0].ParameterType);
-            param.Name = method.Parameters[0].Name;
-            methodWrapper.Parameters.Add(param);
+            // var param = new ParameterDefinition(method.Parameters[0].ParameterType);
+            // param.Name = method.Parameters[0].Name;
+            // methodWrapper.Parameters.Add(param);
 
             var ilProcesser = methodWrapper.Body.GetILProcessor();
 
             if (isTask)
             {
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_0));
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, method));
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldnull));
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldftn, method));
+
+                var action_CTOR = GetTaskFuncConstructor(eventType);
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Newobj, action_CTOR));
+
+                var registerMethod = GetRegisterTaskMethod(eventType);
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, registerMethod));
+
+                // ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_0));
+                // ilProcesser.Append(ilProcesser.Create(OpCodes.Call, method));
             }
             else
             {
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_0));
-                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, method));
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldnull));
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Ldftn, method));
+
+                var action_CTOR = GetEventActionConstructor(eventType);
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Newobj, action_CTOR));
+
+                var registerMethod = GetRegisterEventMethod(eventType);
+                ilProcesser.Append(ilProcesser.Create(OpCodes.Call, registerMethod));
+
+                // ilProcesser.Append(ilProcesser.Create(OpCodes.Ldarg_0));
+                // ilProcesser.Append(ilProcesser.Create(OpCodes.Call, method));
             }
 
             ilProcesser.Append(ilProcesser.Create(OpCodes.Ret));
@@ -270,41 +302,25 @@ namespace GameEvent
             method.DeclaringType.Methods.Add(methodWrapper);
 
             return methodWrapper;
-
-            // this.AppendStaticMethodToRegisterBridge.Invoke(methodWrapper, targetEvent);
         }
 
 
-        private void NewAppendStaticEventToRegisterBridge(MethodReference staticWrapper, TypeReference eventType)
+        private void NewAppendStaticEventToRegisterBridge(MethodReference staticWrapper)
         {
             var ilProcesser = this.newStaticRegisterMethod.Body.GetILProcessor();
             var count = this.newStaticRegisterMethod.Body.Instructions.Count;
             var lastLine = this.newStaticRegisterMethod.Body.Instructions[count - 1];
 
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldnull));
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldftn, staticWrapper));
-
-            var action_CTOR = GetEventActionConstructor(eventType);
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Newobj, action_CTOR));
-
-            var registerMethod = GetRegisterEventMethod(eventType);
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, registerMethod));
+            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, staticWrapper));
         }
 
-        private void NewAppendStaticTaskToRegisterBridge(MethodReference staticWrapper, TypeReference eventType)
+        private void NewAppendStaticTaskToRegisterBridge(MethodReference staticWrapper)
         {
             var ilProcesser = this.newStaticRegisterMethod.Body.GetILProcessor();
             var count = this.newStaticRegisterMethod.Body.Instructions.Count;
             var lastLine = this.newStaticRegisterMethod.Body.Instructions[count - 1];
 
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldnull));
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Ldftn, staticWrapper));
-
-            var action_CTOR = GetTaskFuncConstructor(eventType);
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Newobj, action_CTOR));
-
-            var registerMethod = GetRegisterTaskMethod(eventType);
-            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, registerMethod));
+            ilProcesser.InsertBefore(lastLine, ilProcesser.Create(OpCodes.Call, staticWrapper));
         }
 
         private void NewInjectBridge()
