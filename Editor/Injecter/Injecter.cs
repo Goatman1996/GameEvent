@@ -33,28 +33,6 @@ namespace GameEvent
             this.hasInjected = this.HasInjected();
         }
 
-        public Func<TypeDefinition, EventModifier> BuildEventModifier()
-        {
-            // 修改 事件
-            this.ModifyGameEvent();
-
-            return this.GetEventModify;
-        }
-
-        public void BuildRegisterBridge()
-        {
-            // 创建 RegisterBridge
-            this.InjectBridge();
-        }
-
-        public void InjectUsage(Func<TypeDefinition, EventModifier> provider)
-        {
-            if (this.hasInjected == false)
-            {
-                this.ModifyUsage(provider);
-            }
-        }
-
         public void Write()
         {
             if (this.hasInjected == false)

@@ -10,6 +10,8 @@ namespace GameEvent
 {
     public partial class Injecter
     {
+        private bool injectedBridge = false;
+
         public void New_InjectAllUsage()
         {
             this.NewInjectBridge();
@@ -78,7 +80,7 @@ namespace GameEvent
             var type = gameEventUsage.usageType;
             var fieldAttri = Mono.Cecil.FieldAttributes.Private;
             var fieldType = assemblyDefinition.MainModule.ImportReference(typeof(bool));
-            var fieldRef = new FieldDefinition("__SceneChecked__", fieldAttri, fieldType);
+            var fieldRef = new FieldDefinition($"__{type.Name}__SceneChecked__", fieldAttri, fieldType);
             type.Fields.Add(fieldRef);
             return fieldRef;
         }
@@ -137,11 +139,11 @@ namespace GameEvent
             ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldfld, sceneCheckerField));
             if (needEnable)
             {
-                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brfalse_S, enableBlockFirstLine));
+                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brtrue_S, enableBlockFirstLine));
             }
             else
             {
-                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brfalse_S, firstLine));
+                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brtrue_S, firstLine));
             }
 
 
