@@ -14,8 +14,6 @@ GameEvent 2.0
 
 代码优化，性能应该比1.0版本有明显提升(懒得测试了),
 
-并且
-
 ### 基本用法演示
 ``` csharp
 using GameEvent;
