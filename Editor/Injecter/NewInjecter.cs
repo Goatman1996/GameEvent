@@ -40,7 +40,7 @@ namespace GameEvent
                 var methodList = kv.Value;
                 foreach (var method in methodList)
                 {
-                    InjectMonoPrefixMethod(method, false, gameEventUsage.Customize_op_Implicit_, eventType, sceneCheckerField, false);
+                    InjectMonoPrefixMethod(method, false, gameEventUsage.Customize_op_Implicit_, sceneCheckerField, false);
                 }
             }
             foreach (var kv in gameEventUsage.event_Mono_Enable_Usage_Cache)
@@ -49,7 +49,7 @@ namespace GameEvent
                 var methodList = kv.Value;
                 foreach (var method in methodList)
                 {
-                    InjectMonoPrefixMethod(method, true, gameEventUsage.Customize_op_Implicit_, eventType, sceneCheckerField, false);
+                    InjectMonoPrefixMethod(method, true, gameEventUsage.Customize_op_Implicit_, sceneCheckerField, false);
                 }
             }
 
@@ -59,7 +59,7 @@ namespace GameEvent
                 var methodList = kv.Value;
                 foreach (var method in methodList)
                 {
-                    InjectMonoPrefixMethod(method, false, gameEventUsage.Customize_op_Implicit_, eventType, sceneCheckerField, true);
+                    InjectMonoPrefixMethod(method, false, gameEventUsage.Customize_op_Implicit_, sceneCheckerField, true);
                 }
             }
             foreach (var kv in gameEventUsage.task_Mono_Enable_Usage_Cache)
@@ -68,7 +68,7 @@ namespace GameEvent
                 var methodList = kv.Value;
                 foreach (var method in methodList)
                 {
-                    InjectMonoPrefixMethod(method, true, gameEventUsage.Customize_op_Implicit_, eventType, sceneCheckerField, true);
+                    InjectMonoPrefixMethod(method, true, gameEventUsage.Customize_op_Implicit_, sceneCheckerField, true);
                 }
             }
         }
@@ -83,8 +83,10 @@ namespace GameEvent
             return fieldRef;
         }
 
-        private void InjectMonoPrefixMethod(MethodDefinition method, bool needEnable, MethodDefinition Customize_op_Implicit_, TypeReference eventType, FieldDefinition sceneCheckerField, bool isTask)
+        private void InjectMonoPrefixMethod(MethodDefinition method, bool needEnable, MethodDefinition Customize_op_Implicit_, FieldDefinition sceneCheckerField, bool isTask)
         {
+            var eventType = method.Parameters[0].ParameterType;
+
             var ilProcesser = method.Body.GetILProcessor();
             var firstLine = method.Body.Instructions[0];
 
@@ -217,7 +219,7 @@ namespace GameEvent
                 var methodList = kv.Value;
                 foreach (var method in methodList)
                 {
-                    var staticWrapper = NewGenerate_StaticMethod_Register_Wrapper(method, false, eventType);
+                    var staticWrapper = NewGenerate_StaticMethod_Register_Wrapper(method, false);
                     NewAppendStaticEventToRegisterBridge(staticWrapper);
                 }
             }
@@ -228,14 +230,16 @@ namespace GameEvent
                 var methodList = kv.Value;
                 foreach (var method in methodList)
                 {
-                    var staticRegisterWrapper = NewGenerate_StaticMethod_Register_Wrapper(method, true, eventType);
+                    var staticRegisterWrapper = NewGenerate_StaticMethod_Register_Wrapper(method, true);
                     NewAppendStaticTaskToRegisterBridge(staticRegisterWrapper);
                 }
             }
         }
 
-        private MethodDefinition NewGenerate_StaticMethod_Register_Wrapper(MethodDefinition method, bool isTask, TypeReference eventType)
+        private MethodDefinition NewGenerate_StaticMethod_Register_Wrapper(MethodDefinition method, bool isTask)
         {
+            TypeReference eventType = method.Parameters[0].ParameterType;
+
             var methodName = $"{method.Name}__Wrapper";
             var methodAttri = Mono.Cecil.MethodAttributes.Public;
             methodAttri |= Mono.Cecil.MethodAttributes.HideBySig;
@@ -243,28 +247,7 @@ namespace GameEvent
 
             TypeReference methodRet = assemblyDefinition.MainModule.ImportReference(typeof(void));
 
-            // if (isTask)
-            // {
-            //     var actionType = assemblyDefinition.MainModule.ImportReference(typeof(Func<,>));
-            //     var fieldType = new GenericInstanceType(actionType);
-            //     fieldType.GenericArguments.Add(eventType);
-            //     fieldType.GenericArguments.Add(assemblyDefinition.MainModule.ImportReference(typeof(Task)));
-
-            //     methodRet = fieldType;
-            // }
-            // else
-            // {
-            //     var actionType = assemblyDefinition.MainModule.ImportReference(typeof(Action<>));
-            //     var fieldType = new GenericInstanceType(actionType);
-            //     fieldType.GenericArguments.Add(eventType);
-            //     methodRet = fieldType;
-            // }
-
             var methodWrapper = new MethodDefinition(methodName, methodAttri, methodRet);
-
-            // var param = new ParameterDefinition(method.Parameters[0].ParameterType);
-            // param.Name = method.Parameters[0].Name;
-            // methodWrapper.Parameters.Add(param);
 
             var ilProcesser = methodWrapper.Body.GetILProcessor();
 
@@ -450,9 +433,9 @@ namespace GameEvent
 
             foreach (var kv in eventUsage.event_Instance_Usage_Cache)
             {
-                var eventType = kv.Key;
                 foreach (var usage in kv.Value)
                 {
+                    var eventType = usage.Parameters[0].ParameterType;
                     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
                     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldftn, usage));
 
@@ -466,9 +449,9 @@ namespace GameEvent
 
             foreach (var kv in eventUsage.event_Mono_Enable_Usage_Cache)
             {
-                var eventType = kv.Key;
                 foreach (var usage in kv.Value)
                 {
+                    var eventType = usage.Parameters[0].ParameterType;
                     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
                     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldftn, usage));
 
@@ -482,9 +465,9 @@ namespace GameEvent
 
             foreach (var kv in eventUsage.task_Instance_Usage_Cache)
             {
-                var eventType = kv.Key;
                 foreach (var usage in kv.Value)
                 {
+                    var eventType = usage.Parameters[0].ParameterType;
                     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
                     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldftn, usage));
 
@@ -498,9 +481,9 @@ namespace GameEvent
 
             foreach (var kv in eventUsage.task_Mono_Enable_Usage_Cache)
             {
-                var eventType = kv.Key;
                 foreach (var usage in kv.Value)
                 {
+                    var eventType = usage.Parameters[0].ParameterType;
                     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
                     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldftn, usage));
 
