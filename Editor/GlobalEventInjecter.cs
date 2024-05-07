@@ -39,7 +39,6 @@ namespace GameEvent
             MethodUsageCache usageCache = new MethodUsageCache();
 
             Injecter.DoBackUpDirCreateOneTime(dir);
-            List<Func<TypeDefinition, EventModifier>> ModifierProviderList = new List<Func<TypeDefinition, EventModifier>>();
 
             Dictionary<string, Injecter> injectList = new Dictionary<string, Injecter>();
             foreach (var dllFileName in dllFileArray)
