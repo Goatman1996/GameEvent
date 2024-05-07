@@ -1,13 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 using UnityEditor;
-using System.Linq;
 using System;
 using System.IO;
-using System.Text;
-using Mono.Cecil.Pdb;
 
 namespace GameEvent
 {
@@ -32,7 +27,6 @@ namespace GameEvent
             }
         }
 
-        private static StringBuilder reportSb;
         public static void InjectEvent(string dir, params string[] dllFileArray)
         {
             bool isJumping = false;
@@ -78,7 +72,6 @@ namespace GameEvent
                     // Debug.Log("跳过");
                     goto Finish;
                 }
-
                 foreach (var injecter in injectList.Values)
                 {
                     injecter.BuildEventCache(usageCache);
@@ -91,34 +84,10 @@ namespace GameEvent
                 {
                     injecter.SetCache(usageCache);
                 }
-
                 foreach (var injecter in injectList.Values)
                 {
                     injecter.New_InjectAllUsage();
                 }
-
-
-                // foreach (var injecter in injectList.Values)
-                // {
-                //     var modifierProvider = injecter.BuildEventModifier();
-                //     ModifierProviderList.Add(modifierProvider);
-                // }
-                // foreach (var injecter in injectList.Values)
-                // {
-                //     injecter.BuildRegisterBridge();
-                // }
-                // foreach (var injecter in injectList.Values)
-                // {
-                //     injecter.InjectUsage((t) =>
-                //     {
-                //         foreach (var provider in ModifierProviderList)
-                //         {
-                //             var modifier = provider?.Invoke(t);
-                //             if (modifier != null) return modifier;
-                //         }
-                //         return null;
-                //     });
-                // }
                 foreach (var injecter in injectList.Values)
                 {
                     injecter.Write();
