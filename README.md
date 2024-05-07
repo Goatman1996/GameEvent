@@ -66,11 +66,15 @@ Unity中打开
 
 ProjectSettings/GameEventSettings
 
+![GameEvtSettings](https://github.com/Goatman1996/GameEvent/assets/48623605/e3f8da1e-5ce7-4d8f-ae5e-059ec4ec1a1a)
+
 ### Assembly List
 添加包含【事件定义】及【事件使用】的程序集名称
 
 ### Need Injected Log
 勾选后，会在每次编译注入完成后，打印所有事件的使用日志
+
+![GameEvtLog](https://github.com/Goatman1996/GameEvent/assets/48623605/e6c2313a-a961-44a6-8ee6-495f95be145e)
 
 ### 重新编译脚本 按钮
 在修改了Assembly List后，点击，可及时重新编译脚本，
