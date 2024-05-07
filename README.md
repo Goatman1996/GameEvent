@@ -254,10 +254,10 @@ API
 ```csharp
 GameEvent.GlobalEventInjecter.InjectEvent(string dir, params string[] dllFileArray)
 // dir 为程序集目录，如 "./Library/ScriptAssemblies"
-// dllFileArray 为 GameEventSettings.AssemblyList 中填写的程序集名称
+// dllFileArray 为 GameEventSettings.AssemblyList(api : GameEventSettings.Instance.assemblyList) 中填写的程序集名称
 ```
 
-### 性能
+### 性能(1.0版本的测试)
 
 测试 10000000 千万次 的调起事件（Editor环境中，空方法）
 
