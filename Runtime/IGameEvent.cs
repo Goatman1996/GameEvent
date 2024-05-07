@@ -33,13 +33,13 @@ namespace GameEvent
             {
                 return;
             }
-            foreach (var invoker in Event.GetInvocationList())
+            foreach (Func<T, Task> invoker in Event.GetInvocationList())
             {
-                var task = (Task)invoker?.DynamicInvoke(arg);
-                if (task != null)
-                {
-                    await task;
-                }
+                if (invoker == null) continue;
+                var task = invoker(arg);
+
+                if (task == null) continue;
+                await task;
             }
         }
     }
