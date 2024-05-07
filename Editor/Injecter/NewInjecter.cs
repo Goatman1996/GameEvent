@@ -160,11 +160,11 @@ namespace GameEvent
 
             if (needEnable)
             {
-                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brtrue_S, enableBlockFirstLine));
+                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brfalse_S, enableBlockFirstLine));
             }
             else
             {
-                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brtrue_S, firstLine));
+                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brfalse_S, firstLine));
             }
             {
                 // unregister
