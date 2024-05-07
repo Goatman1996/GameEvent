@@ -1,31 +1,56 @@
 # GameEvent 基于[Attribute]的Unity事件系统
-GameEvent
+GameEvent 2.0
 
 一款基于C#属性[Attribute]的Unity事件系统
 
 一款优雅的事件解决方案
 
+
+### 2.0 版本  新增内容
+
+支持了<泛型>事件
+
+支持单一事件的订阅/取消订阅
+
+代码优化，性能应该比1.0版本有明显提升(懒得测试了),
+
+并且
+
 ### 基本用法演示
 ``` csharp
+using GameEvent;
+
 // 定义一个叫SomeEvt的事件
-public struct SomeEvt : GameEvent.IGameEvent
+public struct SomeEvt : IGameEvent
 {
 
 }
 
 // 订阅事件
-[GameEvent.GameEvent]
+[GameEvent]
 private void OnSomeEvt(SomeEvt evt)
 {
     Debug.Log("SomeEvt happened");
 }
 
-using GameEvent;
 private void SomeMethod()
 {
     // 发起 SomeEvt 事件
     var evt = new SomeEvt();
     evt.Invoke();
+}
+
+// 手动监听/取消监听
+private void ManullySample()
+{
+    // 手动监听/取消监听API，方法上可以不用打标签，打标签只是一个自动监听标记
+    GameEventDriver.RegisterEvent<T>(Action<T> target) where T : IGameEvent
+    GameEventDriver.UnregisterEvent<T>(Action<T> target) where T : IGameEvent    
+    GameEventDriver.RegisterTask<T>(Func<T, Task> target) where T : IGameTask
+    GameEventDriver.UnregisterTask<T>(Func<T, Task> target) where T : IGameTask
+    
+    // 示例
+    GameEventDriver.UnRegisterEvent<SomeEvt>(OnSomeEvt);
 }
 ```
 以上的例子中，三个部分，是可以在任意位置的
@@ -96,7 +121,9 @@ public struct AsyncEvt : GameEvent.IGameTask
 
 参数 (bool CallOnlyIfMonoEnable = false) 意为，当该函数的所属对象是MonoBehaviour时，会额外判断，MonoBehaviour是否Enable，Enable=true时才会被触发事件
 
-注：订阅事件，是以对象为单位的，即某个对象的订阅和取消订阅，会将对象上的所有Game Event，统一订阅或取消
+~~注：订阅事件，是以对象为单位的，即某个对象的订阅和取消订阅，会将对象上的所有Game Event，统一订阅或取消~~  
+
+2.0版本可以自由的订阅和取消单一事件
 
 1，同步事件
 
@@ -146,12 +173,12 @@ public class FooObject
 ```
 以上的事件订阅均是自动发生的
 
-3，手动订阅
-
-如发生手动取消订阅后，又想要重新订阅的情况，提供了手动订阅的API
+3，手动订阅(2.0新增)
 ``` csharp
-// 传入 需要订阅的对象
-GameEvent.GameEventDriver.Register(object target);
+// IGameEvent
+GameEventDriver.RegisterEvent<T>(Action<T> target) where T : IGameEvent
+// IGameTask
+GameEventDriver.RegisterTask<T>(Func<T, Task> target) where T : IGameTask
 ```
 
 
@@ -161,10 +188,12 @@ GameEvent.GameEventDriver.Register(object target);
 
 如订阅者为非MonoBehaviour的对象，则需要手动取消订阅
 
-手动取消订阅API
+手动取消订阅API(2.0新增)
 ``` csharp
-// 传入 需要取消订阅的对象
-GameEvent.GameEventDriver.Unregister(object target);
+// IGameEvent
+GameEventDriver.UnregisterEvent<T>(Action<T> target) where T : IGameEvent
+// IGameTask
+GameEventDriver.UnregisterTask<T>(Func<T, Task> target) where T : IGameTask
 ```
 
 ### 发布事件
@@ -183,6 +212,36 @@ using GameEvent;
 var evt = new AsyncEvt();
 await evt.InvokeTask();
 ```
+### 泛型事件支持(2.0新增)
+现在事件支持泛型
+```csharp
+using GameEvent;
+
+// 泛型事件
+public struct GenericEvt<T> : IGameEvent
+{
+    public T Value;
+}
+
+// 监听确定类型的泛型事件
+[GameEvent]
+private void OnStringGenericEvt(GenericEvt<string> evt)
+{
+    Debug.Log($"OnStringGenericEvt Message {evt}");
+}
+
+// 调起泛型事件
+private void Invoke=GenericEvt()
+{
+    // 调起<string>事件
+    var stringEvt = new GenericEvt<string>() { Value = "Hello" };
+    stringEvt.Invoke();
+
+    // 调起<int>事件
+    var intEvt = new GenericEvt<int>() { Value = 1 };
+    intEvt.Invoke();
+}
+```
 
 ### 打包相关
 
@@ -197,6 +256,7 @@ GameEvent.GlobalEventInjecter.InjectEvent(string dir, params string[] dllFileArr
 ```
 
 ### 性能
+
 测试 10000000 千万次 的调起事件（Editor环境中，空方法）
 
 ``` csharp
@@ -260,12 +320,6 @@ ActionCall : 14ms
 
 如果还是觉得性能有问题的话
 就.....
-
-### 最后一些小问题
-
-当一个对象存在继承关系时
-
-如子类和父类均订阅了同一个事件，则只有子类中的事件会响应
 
 ### 最后
 
