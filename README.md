@@ -229,7 +229,7 @@ public struct GenericEvt<T> : IGameEvent
 [GameEvent]
 private void OnStringGenericEvt(GenericEvt<string> evt)
 {
-    Debug.Log($"OnStringGenericEvt Message {evt}");
+    Debug.Log($"OnStringGenericEvt Message {evt.Value}");
 }
 
 // 调起泛型事件
