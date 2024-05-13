@@ -167,6 +167,11 @@ namespace GameEvent
                 ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brfalse_S, firstLine));
             }
             {
+                // SceneChecker = false 资源的情况，让他继续是false；
+                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
+                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldc_I4_0));
+                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Stfld, sceneCheckerField));
+
                 // unregister
                 ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldarg_0));
                 ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldftn, method));
