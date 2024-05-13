@@ -5,6 +5,8 @@ GameEvent 2.0
 
 一款优雅的事件解决方案
 
+### ChangeLog 2.0.1 
+1. [Bug] Editor下 Project Window 中的资源无法自动检测取消监听
 
 ### 2.0 版本  新增内容
 
