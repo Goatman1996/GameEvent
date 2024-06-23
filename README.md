@@ -5,6 +5,9 @@ GameEvent 2.0
 
 一款优雅的事件解决方案
 
+### ChangeLog 2.0.2
+1. [Bug] 修复一种极端情况，MonoBehaviour已经合法，但是gameObject为空
+
 ### ChangeLog 2.0.1 
 1. [Bug] Editor下 Project Window 中的资源无法自动检测取消监听
 
