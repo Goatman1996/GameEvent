@@ -92,6 +92,7 @@ namespace GameEvent
             var ilProcesser = method.Body.GetILProcessor();
             var firstLine = method.Body.Instructions[0];
 
+            var gameObjectCheckFirstLine = ilProcesser.Create(OpCodes.Ldarg_0);
             var sceneConditionFirstLine = ilProcesser.Create(OpCodes.Ldarg_0);
 
             var enableBlockFirstLine = ilProcesser.Create(OpCodes.Ldarg_0);
@@ -105,7 +106,7 @@ namespace GameEvent
                 monoIsExist_Ref = assemblyDefinition.MainModule.ImportReference(Customize_op_Implicit_);
             }
             ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Call, monoIsExist_Ref));
-            ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brtrue_S, sceneConditionFirstLine));
+            ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brtrue_S, gameObjectCheckFirstLine));
 
             {
                 // unregister
@@ -132,6 +133,26 @@ namespace GameEvent
                 {
                     ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ret));
                 }
+            }
+
+            // if(!mono.gameObject) return;
+            // 这个是当this为合法UnityObject，但是gameObject还没赋值时，先跳过这一次
+            ilProcesser.InsertBefore(firstLine, gameObjectCheckFirstLine);
+            var get_GameObject = typeof(UnityEngine.Component).GetProperty("gameObject").GetMethod;
+            var get_GameObject_Ref = assemblyDefinition.MainModule.ImportReference(get_GameObject);
+            ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Call, get_GameObject_Ref));
+            var goIsExist = typeof(UnityEngine.Object).GetMethod("op_Implicit");
+            var goIsExist_Ref = assemblyDefinition.MainModule.ImportReference(goIsExist);
+            ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Call, goIsExist_Ref));
+            ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Brtrue_S, sceneConditionFirstLine));
+            if (isTask)
+            {
+                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ldnull));
+                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ret));
+            }
+            else
+            {
+                ilProcesser.InsertBefore(firstLine, ilProcesser.Create(OpCodes.Ret));
             }
 
             // __SceneChecker__ == false    
