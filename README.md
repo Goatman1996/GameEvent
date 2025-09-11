@@ -64,7 +64,7 @@ private void ManullySample()
 由于是注入代码的关系，对类似HybridCLR（huatuo）等实现C# dll热更的解决方案，是原生支持的
 
 ## 安装
-https://openupm.cn/packages/com.gm.gameevent/
+https://openupm.com/packages/com.gm.gameevent/
 
 ## 配置
 Unity中打开
