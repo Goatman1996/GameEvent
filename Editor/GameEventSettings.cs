@@ -9,6 +9,8 @@ namespace GameEvent
         public List<string> assemblyList = new List<string>() { "Assembly-CSharp" };
         [Header("打印注入成功的Log")]
         public bool needInjectedLog = true;
+        [Header("【全内存操作】这个可以解决文件锁的问题。会增加注入时长（对于大程序集而言）。")]
+        public bool OperatingInMemory = false;
 
         private static GameEventSettings _Instance;
         public static GameEventSettings Instance

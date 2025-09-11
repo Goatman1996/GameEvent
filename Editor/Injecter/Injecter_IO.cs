@@ -98,6 +98,7 @@ namespace GameEvent
 
             var assemblyReadParams = new ReaderParameters
             {
+                InMemory = GameEventSettings.Instance.OperatingInMemory,
                 ReadSymbols = true,
                 AssemblyResolver = assemblyResolver,
             };
