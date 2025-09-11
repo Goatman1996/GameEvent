@@ -5,6 +5,10 @@ GameEvent 2.0
 
 一款优雅的事件解决方案
 
+### ChangeLog 2.0.3
+
+1. [Option] 增加【全内存操作】选项，可以解决文件锁的问题。会增加注入时长（对于大程序集而言）
+
 ### ChangeLog 2.0.2
 1. [Bug] 修复一种极端情况，MonoBehaviour已经合法，但是gameObject为空
 
